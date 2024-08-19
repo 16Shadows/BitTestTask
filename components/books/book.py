@@ -3,7 +3,7 @@ from datetime import date
 
 @dataclass
 class Book:
-    ID: int
+    ID: int | None
     Name: str
     PublicationYear: int
     Author: str

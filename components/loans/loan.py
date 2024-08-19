@@ -3,7 +3,7 @@ from datetime import date
 
 @dataclass
 class Loan:
-    ID: int
+    ID: int | None
     Name: str
     StartDate: date
     ReturnDate: date
