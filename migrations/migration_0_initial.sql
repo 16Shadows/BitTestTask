@@ -62,7 +62,7 @@ BEGIN
 END;
 
 CREATE TRIGGER IF NOT EXISTS TRG_LoanBookDateConsistency_Update
-BEFORE UPDATE OF StartDate ON Loan
+BEFORE UPDATE OF BookID, StartDate ON Loan
 WHEN EXISTS ( SELECT * FROM Book WHERE Book.ID = NEW.BookID AND NEW.StartDate < Book.AddedAtDate LIMIT 1)
 BEGIN
     SELECT RAISE(FAIL, "The loan starts earlier than the book is added to the library.");
