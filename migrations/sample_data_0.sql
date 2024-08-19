@@ -4,9 +4,9 @@
 */
 BEGIN TRANSACTION;
 
-INSERT INTO Client (ID, Name) VALUES (0, 'Петров Александ Михайлович');
-INSERT INTO Client (ID, Name) VALUES (1, 'Неверов Леонид Васильевич');
-INSERT INTO Client (ID, Name) VALUES (2, 'Некрасов Никита Валерьевич');
+INSERT INTO Client (ID, Name, RegistrationDate) VALUES (0, 'Петров Александ Михайлович', '2024-01-01');
+INSERT INTO Client (ID, Name, RegistrationDate) VALUES (1, 'Неверов Леонид Васильевич', '2024-01-01');
+INSERT INTO Client (ID, Name, RegistrationDate) VALUES (2, 'Некрасов Никита Валерьевич', '2024-01-01');
 
 INSERT INTO Book (ID, Name, PublicationYear, Author, Genre, AddedAtDate) VALUES (0, 'Война и мир', '1873', 'Л.Н. Толстой', 'Роман-эпопея', '2024-01-01');
 INSERT INTO Book (ID, Name, PublicationYear, Author, Genre, AddedAtDate) VALUES (1, 'Война и мир', '1875', 'Л.Н. Толстой', 'Роман-эпопея', '2024-01-01');
