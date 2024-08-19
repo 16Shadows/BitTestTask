@@ -16,13 +16,15 @@ class BookRepositorySqlite3:
             
             date: date -- дата, для которой нужно подсчитать число свободных книг
         """
-        return self._connection.execute(
+        cur = self._connection.execute(
             "SELECT (t.total - u.in_use) as cnt FROM "
             "(SELECT COUNT(*) as total FROM Book WHERE Book.AddedAtDate <= :date) as t, "
             "(SELECT COUNT(*) AS in_use FROM Loan "
             "WHERE Loan.StartDate <= :date AND (Loan.ReturnDate IS NULL OR Loan.ReturnDate >= :date)) as u;",
             { "date": date.isoformat() }
-        ).fetchone()[0]
+        )
+        cur.row_factory = None
+        return cur.fetchone()[0]
 
     def get_genre_scores(self: Self) -> Sequence[tuple[str, int]]:
         """
@@ -35,6 +37,7 @@ class BookRepositorySqlite3:
             "GROUP BY Book.Genre "
             "ORDER BY Cnt DESC;"
         )
+        cur.row_factory = None
         return cur.fetchall()
     
     def get_books(self: Self) -> Sequence[Book]:
@@ -44,10 +47,10 @@ class BookRepositorySqlite3:
         #TODO: все книги загружать в память неэффективно, т.к. БД может вырасти.
         #Можно добавить некоторую форму пагинации или коллекцию, реализующую запрос части записей из БД по срезу.
         cur = self._connection.execute("SELECT * FROM Book")
-        headers = [i[0] for i in cur.description]
+        cur.row_factory = sqlite3.Row # type: ignore
         res : list[Book] = []
         for row in cur.fetchall():
-            columns = dict(zip(headers, row))
-            columns['AddedAtDate'] = date.fromisoformat(columns['AddedAtDate'])
-            res.append(Book(**columns))
+            b = Book(**row)
+            res.append(b)
+            b.AddedAtDate = date.fromisoformat(b.AddedAtDate) # type: ignore
         return res
