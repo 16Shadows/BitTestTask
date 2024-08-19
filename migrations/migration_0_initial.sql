@@ -34,43 +34,63 @@ CREATE TABLE IF NOT EXISTS Loan (
 CREATE TRIGGER IF NOT EXISTS TRG_LoanOnce_Insert
 BEFORE INSERT ON Loan
 WHEN
-(SELECT 1 WHERE
-NEW.ReturnDate IS NULL
-AND
-EXISTS(SELECT * FROM Loan WHERE Loan.BookID = NEW.BookID AND Loan.ReturnDate IS NULL LIMIT 1))
+CASE
+    WHEN NEW.ReturnDate IS NULL THEN
+        EXISTS(SELECT * FROM Loan WHERE Loan.BookID = NEW.BookID AND (Loan.ReturnDate IS NULL OR NEW.StartDate < Loan.ReturnDate))
+    ELSE
+        EXISTS(SELECT * FROM Loan WHERE Loan.BookID = NEW.BookID AND 
+            CASE
+            WHEN Loan.ReturnDate IS NULL THEN
+                Loan.StartDate < NEW.ReturnDate
+            ELSE
+                Loan.StartDate < NEW.ReturnDate OR NEW.StartDate < Loan.ReturnDate
+            END
+            LIMIT 1
+        )
+END
 BEGIN
-    SELECT RAISE(FAIL, 'The book is already loaned.');
+    SELECT RAISE(FAIL, 'The book is already loaned during the specified period.');
 END;
 
 CREATE TRIGGER IF NOT EXISTS TRG_LoanOnce_Update
-BEFORE UPDATE OF ReturnDate ON Loan
+BEFORE UPDATE OF ReturnDate, BookID ON Loan
 WHEN
-(SELECT 1 WHERE
-NEW.ReturnDate IS NULL
-AND
-EXISTS(SELECT * FROM Loan WHERE Loan.BookID = NEW.BookID AND Loan.ReturnDate IS NULL LIMIT 1))
+CASE
+    WHEN NEW.ReturnDate IS NULL THEN
+        EXISTS(SELECT * FROM Loan WHERE Loan.BookID = NEW.BookID AND (Loan.ReturnDate IS NULL OR NEW.StartDate < Loan.ReturnDate))
+    ELSE
+        EXISTS(SELECT * FROM Loan WHERE Loan.BookID = NEW.BookID AND 
+            CASE
+            WHEN Loan.ReturnDate IS NULL THEN
+                Loan.StartDate < NEW.ReturnDate
+            ELSE
+                Loan.StartDate < NEW.ReturnDate OR NEW.StartDate < Loan.ReturnDate
+            END
+            LIMIT 1
+        )
+END
 BEGIN
-    SELECT RAISE(FAIL, 'The book is already loaned.');
+    SELECT RAISE(FAIL, 'The book is already loaned during the specified period.');
 END;
 
 -- Триггерами проверяем соответствие между датой добавления книги в БД и датой начала взятия книги
 CREATE TRIGGER IF NOT EXISTS TRG_LoanBookDateConsistency_Insert
 BEFORE INSERT ON Loan
-WHEN EXISTS ( SELECT * FROM Book WHERE Book.ID = NEW.BookID AND NEW.StartDate < Book.AddedAtDate LIMIT 1)
+WHEN EXISTS ( SELECT * FROM Book WHERE Book.ID = NEW.BookID AND NEW.StartDate < Book.AddedAtDate)
 BEGIN
     SELECT RAISE(FAIL, "The loan starts earlier than the book is added to the library.");
 END;
 
 CREATE TRIGGER IF NOT EXISTS TRG_LoanBookDateConsistency_Update
 BEFORE UPDATE OF BookID, StartDate ON Loan
-WHEN EXISTS ( SELECT * FROM Book WHERE Book.ID = NEW.BookID AND NEW.StartDate < Book.AddedAtDate LIMIT 1)
+WHEN EXISTS ( SELECT * FROM Book WHERE Book.ID = NEW.BookID AND NEW.StartDate < Book.AddedAtDate)
 BEGIN
     SELECT RAISE(FAIL, "The loan starts earlier than the book is added to the library.");
 END;
 
 CREATE TRIGGER IF NOT EXISTS TRG_LoanBookDateConsistency_BookUpdate
 BEFORE UPDATE OF AddedAtDate ON Book
-WHEN EXISTS (SELECT * FROM Loan WHERE Loan.BookID = NEW.ID AND NEW.AddedAtDate > Loan.StartDate LIMIT 1)
+WHEN EXISTS (SELECT * FROM Loan WHERE Loan.BookID = NEW.ID AND NEW.AddedAtDate > Loan.StartDate)
 BEGIN
     SELECT RAISE(FAIL, "The book is added to the library later than it is loaned for the first time.");
 END;
@@ -78,21 +98,21 @@ END;
 -- Триггерами проверяем соответствие между датой регистрации читателя и датой начала взятия книги
 CREATE TRIGGER IF NOT EXISTS TRG_LoanClientDateConsistency_Insert
 BEFORE INSERT ON Loan
-WHEN EXISTS ( SELECT * FROM Client WHERE Client.ID = NEW.ClientID AND NEW.StartDate < Client.RegistrationDate LIMIT 1)
+WHEN EXISTS ( SELECT * FROM Client WHERE Client.ID = NEW.ClientID AND NEW.StartDate < Client.RegistrationDate)
 BEGIN
     SELECT RAISE(FAIL, "The loan starts earlier than the client is registered in the library.");
 END;
 
 CREATE TRIGGER IF NOT EXISTS TRG_LoanClientDateConsistency_Update
 BEFORE UPDATE OF StartDate, ClientID ON Loan
-WHEN EXISTS ( SELECT * FROM Client WHERE Client.ID = NEW.ClientID AND NEW.StartDate < Client.RegistrationDate LIMIT 1)
+WHEN EXISTS ( SELECT * FROM Client WHERE Client.ID = NEW.ClientID AND NEW.StartDate < Client.RegistrationDate)
 BEGIN
     SELECT RAISE(FAIL, "The loan starts earlier than the client is registered in the library.");
 END;
 
 CREATE TRIGGER IF NOT EXISTS TRG_LoanClientDateConsistency_ClientUpdate
 BEFORE UPDATE OF RegistrationDate ON Client
-WHEN EXISTS (SELECT * FROM Loan WHERE Loan.ClientID = NEW.ID AND NEW.RegistrationDate > Loan.StartDate LIMIT 1)
+WHEN EXISTS (SELECT * FROM Loan WHERE Loan.ClientID = NEW.ID AND NEW.RegistrationDate > Loan.StartDate)
 BEGIN
     SELECT RAISE(FAIL, "The client is registered in the library later than they loan a book for the first time.");
 END;
