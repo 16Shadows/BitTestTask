@@ -7,5 +7,5 @@ class Loan:
     Name: str
     StartDate: date
     ReturnDate: date
-    AuthorID: int
+    ClientID: int
     BookID: int
