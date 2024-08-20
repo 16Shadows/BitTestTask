@@ -7,7 +7,7 @@ from .book import Book
 class IBookRepository(Protocol):
     """Протокол для репозитория книг"""
 
-    def count_unloaned_books_at(self: Self, date: date) -> int:
+    def get_unloaned_books_at(self: Self, date: date) -> Sequence[Book]:
         """
             Вычислить число свободных книг на указанную дату.
             
