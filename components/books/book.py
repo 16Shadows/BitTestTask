@@ -3,9 +3,10 @@ from datetime import date
 
 @dataclass
 class Book:
-    ID: int | None
     Name: str
     PublicationYear: int
     Author: str
     Genre: str
     AddedAtDate: date
+
+    ID: int | None = None
