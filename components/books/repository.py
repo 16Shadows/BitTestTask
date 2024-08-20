@@ -15,7 +15,7 @@ class IBookRepository(Protocol):
         """
         raise NotImplementedError()
 
-    def get_genre_scores(self: Self) -> dict[str, int]:
+    def get_genre_scores(self: Self) -> Sequence[tuple[str, int]]:
         """
             Вычислить количество взятий книг каждого жанра (популярность жанра).
             Возвращает словарь с парами жанр-количество взятий.
