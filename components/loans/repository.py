@@ -1,17 +1,10 @@
 from __future__ import annotations
 
-from typing import Self, Protocol, Sequence
+from typing import Self, Protocol
 from .loan import Loan
 
 class ILoanRepository(Protocol):
     """Протокол для репозитория взятий книг"""
-
-    def get_loans(self: Self) -> Sequence[Loan]:
-        """
-            Все взятия книг.
-        """
-        raise NotImplementedError()
-    
     def add_loan(self: Self, loan: Loan) -> None:
         """
             Добавить новое взятие книги.
