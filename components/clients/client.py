@@ -3,6 +3,7 @@ from datetime import date
 
 @dataclass
 class Client:
-    ID: int | None
     Name: str
     RegistrationDate: date
+
+    ID: int | None = None
