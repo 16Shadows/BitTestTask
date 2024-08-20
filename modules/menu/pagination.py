@@ -7,6 +7,8 @@ from modules.menu.static import StaticMenuEntry, MenuEntryBack
 from modules.menu.core import MenuBase, MenuEntryBase, MenuHostBase
 from modules.menu.input import converter_int, validator_int_range
 
+from modules.events import Event, WeakSubscriber
+
 import math
 
 class PaginationMenu[T](MenuBase):
@@ -108,3 +110,26 @@ class PaginationMenu[T](MenuBase):
         if size is None:
             return
         self._pageSize = size
+
+class SelectorPaginationMenuEntry[T](StaticMenuEntry):
+    def __init__(self, text: str, item: T) -> None:
+        super().__init__(text, None) #type: ignore
+        self._item = item
+        self.selected = Event[(MenuHostBase, T)]()
+
+    def on_selected(self: Self, host: MenuHostBase) -> None:
+        self.selected(host, self._item)
+
+class SelectorPaginationMenu[T](PaginationMenu[T]):
+    def __init__(self, items: Sequence[T], text_generator: Callable[[T],str]) -> None:
+        def generate_entry(item: T) -> SelectorPaginationMenuEntry[T]:
+            entry = SelectorPaginationMenuEntry[T](text_generator(item), item)
+            entry.selected += WeakSubscriber(self._on_entry_selected)
+            return entry
+        
+        super().__init__(items, entry_generator=generate_entry, text_generator=None)
+
+        self.on_item_selected = Event[(MenuHostBase, T)]()
+
+    def _on_entry_selected(self: Self, host : MenuHostBase, item : T) -> None:
+        self.on_item_selected(host, item)
