@@ -54,5 +54,8 @@ class MenuEntryBack(StaticMenuEntry):
 
 class SubmenuEntry(StaticMenuEntry):
     """Пункт меню, реализующий открытие дочернего меню"""
-    def __init__(self, text: str, menu: MenuBase) -> None:
-        super().__init__(text, lambda host: host.push(menu))
+    def __init__(self, text: str, menu: MenuBase | Callable[[], MenuBase]) -> None:
+        if callable(menu):
+            super().__init__(text, lambda host: host.push(menu()))
+        else:
+            super().__init__(text, lambda host: host.push(menu))
