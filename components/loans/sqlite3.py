@@ -157,10 +157,10 @@ class UnreturnedLoansView(CachingView[tuple[Loan, Book, Client]]):
                 "SELECT t.ID, t.ClientName, t.RegistrationDate,  "
                 "t.BookName, t.Author, t.Genre, t.PublicationYear, t.AddedAtDate, "
                 "t.StartDate, t.BookID, t.ClientID "
-                "FROM (SELECT *, Client.Name as ClientName, Book.Name as BookName, ROW_NUMBER() OVER (ORDER BY Client.Name) as row_cnt "
+                "FROM (SELECT *, Client.Name as ClientName, Book.Name as BookName, ROW_NUMBER() OVER (ORDER BY Book.Name) as row_cnt "
                 "FROM Loan INNER JOIN Book ON Loan.BookID = Book.ID INNER JOIN Client ON Loan.ClientID = Client.ID "
                 "WHERE Loan.ReturnDate IS NULL "
-                "ORDER BY Client.Name "
+                "ORDER BY Book.Name "
                 "LIMIT :start,:precount;) as t "
                 "WHERE t.row_cnt % :stride = 1 LIMIT :count;"
             ) if stride > 1 else (
@@ -169,7 +169,7 @@ class UnreturnedLoansView(CachingView[tuple[Loan, Book, Client]]):
                 "Loan.ID, Loan.StartDate, Loan.BookID, Loan.ClientID "
                 "FROM Loan INNER JOIN Book ON Loan.BookID = Book.ID INNER JOIN Client ON Loan.ClientID = Client.ID "
                 "WHERE Loan.ReturnDate IS NULL "
-                "ORDER BY Client.Name "
+                "ORDER BY Book.Name "
                 "LIMIT :start,:count;"
             )
         else:
@@ -177,10 +177,10 @@ class UnreturnedLoansView(CachingView[tuple[Loan, Book, Client]]):
                 "SELECT t.ID, t.ClientName, t.RegistrationDate,  "
                 "t.BookName, t.Author, t.Genre, t.PublicationYear, t.AddedAtDate, "
                 "t.StartDate, t.BookID, t.ClientID "
-                "FROM (SELECT *, Client.Name as ClientName, Book.Name as BookName, ROW_NUMBER() OVER (ORDER BY Client.Name) as row_cnt "
+                "FROM (SELECT *, Client.Name as ClientName, Book.Name as BookName, ROW_NUMBER() OVER (ORDER BY Book.Name) as row_cnt "
                 "FROM Loan INNER JOIN Book ON Loan.BookID = Book.ID INNER JOIN Client ON Loan.ClientID = Client.ID "
                 f"WHERE Loan.ReturnDate IS NULL AND ({self._predicate}) "
-                "ORDER BY Client.Name "
+                "ORDER BY Book.Name "
                 "LIMIT :start,:precount;) as t "
                 "WHERE t.row_cnt % :stride = 1 LIMIT :count;"
             ) if stride > 1 else (
@@ -189,7 +189,7 @@ class UnreturnedLoansView(CachingView[tuple[Loan, Book, Client]]):
                 "Loan.ID, Loan.StartDate, Loan.BookID, Loan.ClientID "
                 "FROM Loan INNER JOIN Book ON Loan.BookID = Book.ID INNER JOIN Client ON Loan.ClientID = Client.ID "
                 f"WHERE Loan.ReturnDate IS NULL AND ({self._predicate}) "
-                "ORDER BY Client.Name "
+                "ORDER BY Book.Name "
                 "LIMIT :start,:count;"
             )
 
