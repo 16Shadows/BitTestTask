@@ -58,6 +58,42 @@ if __name__ == "__main__":
                     ),
                     MenuEntryBack()
                 ])),
+                StaticMenuEntry(
+                    "Число взятых за всё время книг",
+                    lambda host: host.push(
+                        PaginationMenu(
+                            clientRepo.get_total_loans_per_client(),
+                            text_generator=lambda x: f'{client_to_text(x[0])} - {x[1]}'
+                        )
+                    )
+                ),
+                StaticMenuEntry(
+                    "Число книг на руках",
+                    lambda host: host.push(
+                        PaginationMenu(
+                            clientRepo.get_total_unreturned_loans_per_client(),
+                            text_generator=lambda x: f'{client_to_text(x[0])} - {x[1]}'
+                        )
+                    )
+                ),
+                StaticMenuEntry(
+                    "Последние посещения",
+                    lambda host: host.push(
+                        PaginationMenu(
+                            clientRepo.get_last_visit_dates(),
+                            text_generator=lambda x: f'{client_to_text(x[0])} - {x[1].isoformat()}'
+                        )
+                    )
+                ),
+                StaticMenuEntry(
+                    "Популярные жанры (по числу взятых книг жанра)",
+                    lambda host: host.push(
+                        PaginationMenu(
+                            bookRepo.get_genre_scores(),
+                            text_generator=lambda x: f'{x[0]} - {x[1]}'
+                        )
+                    )
+                ),
                 MenuEntryBack()
             ])),
             MenuEntryBack()
