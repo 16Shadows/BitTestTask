@@ -57,9 +57,9 @@ BEFORE UPDATE OF ReturnDate, BookID ON Loan
 WHEN
 CASE
     WHEN NEW.ReturnDate IS NULL THEN
-        EXISTS(SELECT * FROM Loan WHERE Loan.BookID = NEW.BookID AND (Loan.ReturnDate IS NULL OR NEW.StartDate < Loan.ReturnDate))
+        EXISTS(SELECT * FROM Loan WHERE Loan.BookID = NEW.BookID AND Loan.ID != NEW.ID AND (Loan.ReturnDate IS NULL OR NEW.StartDate < Loan.ReturnDate))
     ELSE
-        EXISTS(SELECT * FROM Loan WHERE Loan.BookID = NEW.BookID AND 
+        EXISTS(SELECT * FROM Loan WHERE Loan.BookID = NEW.BookID AND Loan.ID != NEW.ID AND
             CASE
             WHEN Loan.ReturnDate IS NULL THEN
                 Loan.StartDate < NEW.ReturnDate
