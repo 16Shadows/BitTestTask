@@ -14,22 +14,22 @@ class FindBookMenu(MenuBase):
 
     @MenuBase.text.getter
     def text(self: Self) -> str:
-        res = "Поиск книги\n"
+        res = "Поиск книги"
         
         if self._predicate.AuthorContains is not None:
-            res += "Автор содержит: " + self._predicate.AuthorContains
+            res += "\nАвтор содержит: " + self._predicate.AuthorContains
 
         if self._predicate.NameContains is not None:
-            res += "Название содержит: " + self._predicate.NameContains
+            res += "\nНазвание содержит: " + self._predicate.NameContains
 
         if self._predicate.GenreContains is not None:
-            res += "Жанр содержит: " + self._predicate.GenreContains
+            res += "\nЖанр содержит: " + self._predicate.GenreContains
 
         if self._predicate.PublicationYearMin is not None:
-            res += "Опубликована не раньше: " + str(self._predicate.PublicationYearMin)
+            res += "\nОпубликована не раньше: " + str(self._predicate.PublicationYearMin)
 
         if self._predicate.PublicationYearMax is not None:
-            res += "Опубликована не позже: " + str(self._predicate.PublicationYearMax)
+            res += "\nОпубликована не позже: " + str(self._predicate.PublicationYearMax)
 
         return res
     

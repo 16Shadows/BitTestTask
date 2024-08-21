@@ -14,10 +14,10 @@ class FindClientMenu(MenuBase):
 
     @MenuBase.text.getter
     def text(self: Self) -> str:
-        res = "Поиск читателя\n"
+        res = "Поиск читателя"
         
         if self._predicate.NameContains is not None:
-            res += "Имя содержит: " + self._predicate.NameContains
+            res += "\nИмя содержит: " + self._predicate.NameContains
 
         return res
     
