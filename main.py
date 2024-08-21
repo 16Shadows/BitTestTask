@@ -14,6 +14,7 @@ from modules.menu.input import validator_always
 
 
 from menus.AddLoanMenu import AddLoanMenu
+from menus.AddLoanReturnMenu import AddLoanReturnMenu
 
 from menus.common import book_to_text
 
@@ -36,7 +37,8 @@ if __name__ == "__main__":
         loanRepo = LoanRepositorySqlite3(connection)
         rootMenu = StaticMenu("АРМ Помощник библиотекаря", [
             SubmenuEntry("Добавить взятие/возврат книги.", StaticMenu("Взятие/возврат книги", [
-                SubmenuEntry("Добавить взятие книги", AddLoanMenu(bookRepo, clientRepo, loanRepo)),
+                SubmenuEntry("Добавить взятие книги", lambda: AddLoanMenu(bookRepo, clientRepo, loanRepo)),
+                SubmenuEntry("Добавить возврат книги", lambda: AddLoanReturnMenu(loanRepo)),
                 MenuEntryBack()
             ])),
             SubmenuEntry("Отчёты", StaticMenu("Отчёты", [
