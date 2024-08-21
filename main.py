@@ -1,9 +1,14 @@
 from datetime import date
+from typing import Self
 
+from components.books.repository import BookSearchPredicate, IBookRepository
 from components.books.sqlite3 import BookRepositorySqlite3
 
 from components.clients.sqlite3 import ClientRepositorySqlite3
+
 from components.loans.sqlite3 import LoanRepositorySqlite3
+from components.loans.repository import LoanSearchPredicate, ILoanRepository
+
 from sqlite3 import connect
 
 from modules.menu.hosts import SimpleConsoleMenuHost
@@ -16,7 +21,10 @@ from modules.menu.input import validator_always
 from menus.AddLoanMenu import AddLoanMenu
 from menus.AddLoanReturnMenu import AddLoanReturnMenu
 
-from menus.common import book_to_text
+from menus.FindBookMenu import FindBookMenu
+from menus.FindLoanMenu import FindLoanMenu
+
+from menus.common import book_to_text, client_to_text, loan_to_text
 
 def unloaned_books_at(host: MenuHostBase):
     when = host.input("Введите дату в формате 'ГГГГ-ММ-ДД' (или используйте Ctrl + C, чтобы отменить ввод): ",
@@ -30,6 +38,22 @@ def unloaned_books_at(host: MenuHostBase):
         text_generator=book_to_text
     ))
 
+class FilteredBooksListMenu(FindBookMenu):
+    def __init__(self, bookRepo: IBookRepository) -> None:
+        super().__init__(self._do_search)
+        self._bookRepo = bookRepo
+
+    def _do_search(self: Self, host: MenuHostBase, predicate: BookSearchPredicate):
+        host.push(PaginationMenu(self._bookRepo.get_books(predicate), text_generator=book_to_text))
+
+class FilteredLoansListMenu(FindLoanMenu):
+    def __init__(self, repo: ILoanRepository) -> None:
+        super().__init__(self._do_search)
+        self._repo = repo
+
+    def _do_search(self: Self, host: MenuHostBase, predicate: LoanSearchPredicate):
+        host.push(PaginationMenu(self._repo.get_unreturned_loans(predicate), text_generator=loan_to_text))
+
 if __name__ == "__main__":
     with connect("library.db") as connection:
         bookRepo = BookRepositorySqlite3(connection)
@@ -39,6 +63,11 @@ if __name__ == "__main__":
             SubmenuEntry("Добавить взятие/возврат книги.", StaticMenu("Взятие/возврат книги", [
                 SubmenuEntry("Добавить взятие книги", lambda: AddLoanMenu(bookRepo, clientRepo, loanRepo)),
                 SubmenuEntry("Добавить возврат книги", lambda: AddLoanReturnMenu(loanRepo)),
+                MenuEntryBack()
+            ])),
+            SubmenuEntry("Книги", StaticMenu("Действия с книгами", [
+                SubmenuEntry("Список всех книг", lambda: FilteredBooksListMenu(bookRepo)),
+                SubmenuEntry("Список выданных книг", lambda: FilteredLoansListMenu(loanRepo)),
                 MenuEntryBack()
             ])),
             SubmenuEntry("Отчёты", StaticMenu("Отчёты", [
