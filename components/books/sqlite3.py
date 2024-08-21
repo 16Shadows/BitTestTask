@@ -49,7 +49,7 @@ def generate_predicate_query(predicate: BookSearchPredicate) -> tuple[str, dict[
         params['name'] = f"%{predicate.NameContains}%"
 
     if predicate.GenreContains is not None:
-        predicates.append("Name LIKE :genre")
+        predicates.append("Genre LIKE :genre")
         params['genre'] = f"%{predicate.GenreContains}%"
 
     if predicate.PublicationYearMin is not None:
