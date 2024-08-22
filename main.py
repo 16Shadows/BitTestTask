@@ -24,6 +24,7 @@ from menus.AddLoanReturnMenu import AddLoanReturnMenu
 
 from menus.FindBookMenu import FindBookMenu
 from menus.FindLoanMenu import FindLoanMenu
+from menus.FilteredLoansMenu import FilteredLoansListMenu
 
 from menus.common import book_to_text, client_to_text, loan_to_text
 
@@ -55,14 +56,6 @@ class FilteredBooksListMenu(FindBookMenu):
 
     def _do_search(self: Self, host: MenuHostBase, predicate: BookSearchPredicate):
         host.push(PaginationMenu(self._bookRepo.get_books(predicate), text_generator=book_to_text))
-
-class FilteredLoansListMenu(FindLoanMenu):
-    def __init__(self, repo: ILoanRepository) -> None:
-        super().__init__(self._do_search)
-        self._repo = repo
-
-    def _do_search(self: Self, host: MenuHostBase, predicate: LoanSearchPredicate):
-        host.push(PaginationMenu(self._repo.get_unreturned_loans(predicate), text_generator=loan_to_text))
 
 class FilteredExpiredLoansMenu(FindLoanMenu):
     def __init__(self, repo: ILoanRepository, at: date) -> None:
@@ -116,6 +109,21 @@ class FilteredExpiredLoansMenu(FindLoanMenu):
                         file=report
                     )
 
+class DummyGeocoder:
+    """
+        Геокодер-заглушка, который нужно заменить реальным геокодером.
+        Увы, у меня нет доступа к API геокодера.
+    """
+    def address_to_coordinates(self: Self, address: str) -> tuple[float, float] | None:
+       """
+            Преобразует указаннный адрес в координаты точки на планете.
+            Если адрес преобразовать невозможно, то возвращает None.
+            Координаты возвращаются в виде tuple, с элементами в порядке долгота-широта
+       """
+       if address == 'Unknown':
+            return None
+       else:
+            return (0, 0)
 
 if __name__ == "__main__":
     with connect("library.db") as connection:
@@ -130,7 +138,7 @@ if __name__ == "__main__":
             ])),
             SubmenuEntry("Книги", StaticMenu("Действия с книгами", [
                 SubmenuEntry("Список всех книг", lambda: FilteredBooksListMenu(bookRepo)),
-                SubmenuEntry("Список выданных книг", lambda: FilteredLoansListMenu(loanRepo)),
+                SubmenuEntry("Список выданных книг", lambda: FilteredLoansListMenu(loanRepo, DummyGeocoder())),
                 MenuEntryBack()
             ])),
             SubmenuEntry("Отчёты", StaticMenu("Отчёты", [
