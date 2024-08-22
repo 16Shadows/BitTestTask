@@ -78,7 +78,8 @@ class FilteredExpiredLoansMenu(FindLoanMenu):
                     text_generator=lambda x: f"{loan_to_text((x[0], x[1], x[2]))} - {x[3]} дней."
                 )
             ),
-            StaticMenuEntry("Сохранить отчёт в файл", lambda host: self._save_to_file(host, predicate))
+            StaticMenuEntry("Сохранить отчёт в файл", lambda host: self._save_to_file(host, predicate)),
+            MenuEntryBack()
         ]))
 
     def _save_to_file(self: Self, host: MenuHostBase, predicate: LoanSearchPredicate):

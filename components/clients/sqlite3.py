@@ -72,13 +72,13 @@ class AllClientsView(CachingView[Client]):
         #Если stide равен 1, то можно упростить запрос, игнорируя row_cnt и stride
         if self._predicate is None:
             query = (
-                "SELECT t.ID, t.Name, t.RegistrationDate FROM "
+                "SELECT t.ID, t.Name, t.RegistrationDate, t.Address FROM "
                 "(SELECT *, ROW_NUMBER() OVER (ORDER BY Book.Name) as row_cnt FROM Client ORDER BY Client.Name LIMIT :start,:precount) as t "
                 "WHERE row_cnt % :stride = 1 LIMIT :count;"
             ) if stride > 1 else ( "SELECT * FROM Client ORDER BY Client.Name LIMIT :start,:count;" )
         else:
             query = (
-                "SELECT t.ID, t.Name, t.RegistrationDate FROM "
+                "SELECT t.ID, t.Name, t.RegistrationDate, t.Address FROM "
                 f"(SELECT *, ROW_NUMBER() OVER (ORDER BY Book.Name) as row_cnt FROM Client WHERE {self._predicate} ORDER BY Client.Name LIMIT :start,:precount) as t "
                 "WHERE row_cnt % :stride = 1 LIMIT :count;"
             ) if stride > 1 else ( f"SELECT * FROM Client WHERE {self._predicate} ORDER BY Client.Name LIMIT :start,:count;" )
@@ -116,8 +116,8 @@ class LastVisitDatesView(CachingView[tuple[Client, date]]):
         #Если stide равен 1, то можно упростить запрос, игнорируя row_cnt и stride
         if self._predicate is None:
             query = (
-                "SELECT t.ID, t.Name, t.RegistrationDate, t.last_visit_date FROM "
-                "(SELECT Client.ID, Client.Name, Client.RegistrationDate, "
+                "SELECT t.ID, t.Name, t.RegistrationDate, t.last_visit_date, Client.Address FROM "
+                "(SELECT Client.ID, Client.Name, Client.RegistrationDate, Client.Address, "
                 "COALESCE(MAX(COALESCE(Loan.ReturnDate, Loan.StartDate)), Client.RegistrationDate) as last_visit_date, "
                 "ROW_NUMBER() OVER (ORDER BY Client.Name) as row_cnt "
                 "FROM Client LEFT JOIN Loan ON Loan.ClientID = Client.ID "
@@ -125,7 +125,7 @@ class LastVisitDatesView(CachingView[tuple[Client, date]]):
                 "ORDER BY Client.Name LIMIT :start,:precount) AS t "
                 "WHERE t.row_cnt % :stride = 1 LIMIT :count;"
             ) if stride > 1 else (
-                "SELECT Client.ID, Client.Name, Client.RegistrationDate, "
+                "SELECT Client.ID, Client.Name, Client.RegistrationDate, Client.Address, "
                 "COALESCE(MAX(COALESCE(Loan.ReturnDate, Loan.StartDate)), Client.RegistrationDate) as last_visit_date "
                 "FROM Client LEFT JOIN Loan ON Loan.ClientID = Client.ID "
                 "GROUP BY Client.ID "
@@ -133,8 +133,8 @@ class LastVisitDatesView(CachingView[tuple[Client, date]]):
             )
         else:
             query = (
-                "SELECT t.ID, t.Name, t.RegistrationDate, t.last_visit_date FROM "
-                "(SELECT Client.ID, Client.Name, Client.RegistrationDate, "
+                "SELECT t.ID, t.Name, t.RegistrationDate, t.last_visit_date, t.Address FROM "
+                "(SELECT Client.ID, Client.Name, Client.RegistrationDate, Client.Address, "
                 "COALESCE(MAX(COALESCE(Loan.ReturnDate, Loan.StartDate)), Client.RegistrationDate) as last_visit_date, "
                 "ROW_NUMBER() OVER (ORDER BY Client.Name) as row_cnt "
                 "FROM Client LEFT JOIN Loan ON Loan.ClientID = Client.ID "
@@ -143,7 +143,7 @@ class LastVisitDatesView(CachingView[tuple[Client, date]]):
                 "ORDER BY Client.Name LIMIT :start,:precount) AS t "
                 "WHERE t.row_cnt % :stride = 1 LIMIT :count;"
             ) if stride > 1 else (
-                "SELECT Client.ID, Client.Name, Client.RegistrationDate, "
+                "SELECT Client.ID, Client.Name, Client.RegistrationDate, Client.Address, "
                 "COALESCE(MAX(COALESCE(Loan.ReturnDate, Loan.StartDate)), Client.RegistrationDate) as last_visit_date "
                 "FROM Client LEFT JOIN Loan ON Loan.ClientID = Client.ID "
                 f"WHERE {self._predicate} "
@@ -163,7 +163,7 @@ class LastVisitDatesView(CachingView[tuple[Client, date]]):
         cur.row_factory = sqlite3.Row #type: ignore
         return [
             (
-                Client(row['Name'], date.fromisoformat(row['RegistrationDate']), row['ID']),
+                Client(row['Name'], date.fromisoformat(row['RegistrationDate']), row['Address'], row['ID']),
                 date.fromisoformat(row['last_visit_date'])
             )
             for row in cur.fetchall()
@@ -190,8 +190,8 @@ class TotalLoansView(CachingView[tuple[Client, int]]):
         #Если stide равен 1, то можно упростить запрос, игнорируя row_cnt и stride
         if self._predicate is None:
             query = (
-                "SELECT t.ID, t.Name, t.RegistrationDate, t.last_visit_date FROM "
-                "(SELECT Client.ID, Client.Name, Client.RegistrationDate, COUNT(Loan.ID) as total_loans, "
+                "SELECT t.ID, t.Name, t.RegistrationDate, t.last_visit_date, t.Address FROM "
+                "(SELECT Client.ID, Client.Name, Client.RegistrationDate, COUNT(Loan.ID) as total_loans, Client.Address, "
                 "ROW_NUMBER() OVER (ORDER BY Client.Name) as row_cnt "
                 "FROM Client LEFT JOIN Loan ON Loan.ClientID = Client.ID "
                 "GROUP BY Client.ID "
@@ -199,7 +199,7 @@ class TotalLoansView(CachingView[tuple[Client, int]]):
                 "LIMIT :start,:precount) AS t "
                 "WHERE t.row_cnt % :stride = 1 LIMIT :count;"
             ) if stride > 1 else (
-                "SELECT Client.ID, Client.Name, Client.RegistrationDate, COUNT(Loan.ID) as total_loans "
+                "SELECT Client.ID, Client.Name, Client.RegistrationDate, COUNT(Loan.ID) as total_loans, Client.Address "
                 "FROM Client LEFT JOIN Loan ON Loan.ClientID = Client.ID "
                 "GROUP BY Client.ID "
                 "ORDER BY Client.Name "
@@ -207,8 +207,8 @@ class TotalLoansView(CachingView[tuple[Client, int]]):
             )
         else:
             query = (
-                "SELECT t.ID, t.Name, t.RegistrationDate, t.last_visit_date FROM "
-                "(SELECT Client.ID, Client.Name, Client.RegistrationDate, COUNT(Loan.ID) as total_loans, "
+                "SELECT t.ID, t.Name, t.RegistrationDate, t.last_visit_date, t.Address FROM "
+                "(SELECT Client.ID, Client.Name, Client.RegistrationDate, COUNT(Loan.ID) as total_loans, Client.Address, "
                 "ROW_NUMBER() OVER (ORDER BY Client.Name) as row_cnt "
                 "FROM Client LEFT JOIN Loan ON Loan.ClientID = Client.ID "
                 f"WHERE {self._predicate} "
@@ -217,7 +217,7 @@ class TotalLoansView(CachingView[tuple[Client, int]]):
                 "LIMIT :start,:precount) AS t "
                 "WHERE t.row_cnt % :stride = 1 LIMIT :count;"
             ) if stride > 1 else (
-                "SELECT Client.ID, Client.Name, Client.RegistrationDate, COUNT(Loan.ID) as total_loans "
+                "SELECT Client.ID, Client.Name, Client.RegistrationDate, COUNT(Loan.ID) as total_loans, Client.Address "
                 "FROM Client LEFT JOIN Loan ON Loan.ClientID = Client.ID "
                 f"WHERE {self._predicate} "
                 "GROUP BY Client.ID "
@@ -237,7 +237,7 @@ class TotalLoansView(CachingView[tuple[Client, int]]):
         cur.row_factory = sqlite3.Row #type: ignore
         return [
             (
-                Client(row['Name'], date.fromisoformat(row['RegistrationDate']), row['ID']),
+                Client(row['Name'], date.fromisoformat(row['RegistrationDate']), row['Address'], row['ID']),
                 row['total_loans']
             )
             for row in cur.fetchall()
@@ -264,8 +264,8 @@ class UnreturnedLoansView(CachingView[tuple[Client, int]]):
         #Если stide равен 1, то можно упростить запрос, игнорируя row_cnt и stride
         if self._predicate is None:
             query = (
-                "SELECT t.ID, t.Name, t.RegistrationDate, t.last_visit_date FROM "
-                "(SELECT Client.ID, Client.Name, Client.RegistrationDate, COUNT(Loan.ID) as total_loans, "
+                "SELECT t.ID, t.Name, t.RegistrationDate, t.last_visit_date, t.Address FROM "
+                "(SELECT Client.ID, Client.Name, Client.RegistrationDate, COUNT(Loan.ID) as total_loans, Client.Address, "
                 "ROW_NUMBER() OVER (ORDER BY Client.Name) as row_cnt "
                 "FROM Client LEFT JOIN Loan ON Loan.ClientID = Client.ID "
                 "WHERE Loan.ReturnDate IS NULL "
@@ -274,7 +274,7 @@ class UnreturnedLoansView(CachingView[tuple[Client, int]]):
                 "LIMIT :start,:precount) AS t "
                 "WHERE t.row_cnt % :stride = 1 LIMIT :count;"
             ) if stride > 1 else (
-                "SELECT Client.ID, Client.Name, Client.RegistrationDate, COUNT(Loan.ID) as total_loans "
+                "SELECT Client.ID, Client.Name, Client.RegistrationDate, COUNT(Loan.ID) as total_loans, Client.Address "
                 "FROM Client LEFT JOIN Loan ON Loan.ClientID = Client.ID "
                 "WHERE Loan.ReturnDate IS NULL "
                 "GROUP BY Client.ID "
@@ -283,8 +283,8 @@ class UnreturnedLoansView(CachingView[tuple[Client, int]]):
             )
         else:
             query = (
-                "SELECT t.ID, t.Name, t.RegistrationDate, t.last_visit_date FROM "
-                "(SELECT Client.ID, Client.Name, Client.RegistrationDate, COUNT(Loan.ID) as total_loans, "
+                "SELECT t.ID, t.Name, t.RegistrationDate, t.last_visit_date, t.Address FROM "
+                "(SELECT Client.ID, Client.Name, Client.RegistrationDate, COUNT(Loan.ID) as total_loans, Client.Address, "
                 "ROW_NUMBER() OVER (ORDER BY Client.Name) as row_cnt "
                 "FROM Client LEFT JOIN Loan ON Loan.ClientID = Client.ID "
                 f"WHERE Loan.ReturnDate IS NULL AND ({self._predicate}) "
@@ -293,7 +293,7 @@ class UnreturnedLoansView(CachingView[tuple[Client, int]]):
                 "LIMIT :start,:precount) AS t "
                 "WHERE t.row_cnt % :stride = 1 LIMIT :count;"
             ) if stride > 1 else (
-                "SELECT Client.ID, Client.Name, Client.RegistrationDate, COUNT(Loan.ID) as total_loans "
+                "SELECT Client.ID, Client.Name, Client.RegistrationDate, COUNT(Loan.ID) as total_loans, Client.Address "
                 "FROM Client LEFT JOIN Loan ON Loan.ClientID = Client.ID "
                 f"WHERE Loan.ReturnDate IS NULL AND ({self._predicate}) "
                 "GROUP BY Client.ID "
@@ -313,7 +313,7 @@ class UnreturnedLoansView(CachingView[tuple[Client, int]]):
         cur.row_factory = sqlite3.Row #type: ignore
         return [
             (
-                Client(row['Name'], date.fromisoformat(row['RegistrationDate']), row['ID']),
+                Client(row['Name'], date.fromisoformat(row['RegistrationDate']), row['Address'], row['ID']),
                 row['total_loans']
             )
             for row in cur.fetchall()
