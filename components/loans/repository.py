@@ -36,6 +36,17 @@ class ILoanRepository(Protocol):
             Вывести список всех невозвращённых книг (взятий книг), удовлетворяющих предикату
         """
         raise NotImplementedError()
+    
+    def get_expired_loans_at(self: Self, at: date, predicate: LoanSearchPredicate | None = None) -> Sequence[tuple[Loan, Book, Client, int]]:
+        """
+            Получить список всех просроченных на указанную дату взятий книг, удовлетворяющих предикату.
+            Аргументы:
+                at : date -- дата, для которой формируется список.
+                             Книги, которые были просроченны позже этой даты, не будут отображены.
+                             Число дней, на которое книги были просрочены, будет отсчитываться до этой даты.
+                predicate: LoanSearchPredicate -- предикат для фильтрации взятых книг.
+        """
+        raise NotImplementedError()
 
 @dataclass    
 class LoanSearchPredicate:
