@@ -4,6 +4,7 @@ from datetime import date
 @dataclass
 class Loan:
     StartDate: date
+    EndDate: date
     ClientID: int
     BookID: int
     

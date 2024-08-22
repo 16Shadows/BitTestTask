@@ -1,7 +1,6 @@
 from modules.menu.core import MenuBase, MenuEntryBase, MenuHostBase
 from modules.menu.static import MenuEntryBack, StaticMenuEntry, SubmenuEntry
 from modules.menu.pagination import SelectorPaginationMenu
-from modules.menu.input import validator_always
 from modules.events import WeakSubscriber
 
 from collections.abc import Sequence
@@ -25,6 +24,7 @@ class AddLoanMenu(MenuBase):
         self._book : Book | None = None
         self._client : Client | None = None
         self._startDate : date = date.today()
+        self._endDate : date = date.today()
         self._bookRepo = bookRepo
         self._clientRepo = clientRepo
         self._loanRepo = loanRepo
@@ -35,7 +35,8 @@ class AddLoanMenu(MenuBase):
             "Добавление взятия книги:\n"
             f"Книга: {(book_to_text(self._book) if self._book is not None else "не выбрана")}.\n"
             f"Читатель: {(client_to_text(self._client) if self._client is not None else "не выбран")}.\n"
-            f"Дата выдачи (ГГГГ-ММ-ДД): {self._startDate.isoformat()}"
+            f"Дата выдачи (ГГГГ-ММ-ДД): {self._startDate.isoformat()}\n"
+            f"Ожидаемая дата возврата (ГГГГ-ММ-ДД): {self._endDate.isoformat()}"
         )
     
     @MenuBase.entries.getter
@@ -43,7 +44,8 @@ class AddLoanMenu(MenuBase):
         res : list[MenuEntryBase] = [
             SubmenuEntry("Выбрать книгу", FindBookMenu(self._on_search_book)),
             SubmenuEntry("Выбрать читателя", FindClientMenu(self._on_search_client)),
-            StaticMenuEntry("Изменить дату выдачи", self._set_start_date)
+            StaticMenuEntry("Изменить дату выдачи", self._set_start_date),
+            StaticMenuEntry("Изменить ожидаемую дату возврата", self._set_end_date)
         ]
 
         if self._client is not None and self._book is not None:
@@ -84,15 +86,25 @@ class AddLoanMenu(MenuBase):
     def _set_start_date(self: Self, host: MenuHostBase):
         when = host.input("Введите дату в формате 'ГГГГ-ММ-ДД' (или используйте Ctrl + C, чтобы отменить ввод): ",
                       date.fromisoformat,
-                      validator_always,
-                      "Неверный формат даты!")
+                      lambda x: x <= self._endDate,
+                      "Дата должна быть в корректном формате и не позже ожидаемой даты возврата!")
         if when is None:
             return
         self._startDate = when
 
+    def _set_end_date(self: Self, host: MenuHostBase):
+        when = host.input("Введите дату в формате 'ГГГГ-ММ-ДД' (или используйте Ctrl + C, чтобы отменить ввод): ",
+                      date.fromisoformat,
+                      lambda x: x >= self._startDate,
+                      "Дата должна быть в корректном формате и не раньше даты выдачи!")
+        if when is None:
+            return
+        self._endDate = when
+
     def _add_new_loan(self: Self, host: MenuHostBase):
         loan = Loan(
             self._startDate,
+            self._endDate,
             self._client.ID, #type: ignore
             self._book.ID #type: ignore
         )

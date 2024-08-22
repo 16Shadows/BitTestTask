@@ -29,11 +29,12 @@ class LoanRepositorySqlite3:
         try:
             if loan.ID is None:
                 self._connection.execute(
-                    "INSERT INTO Loan (StartDate, ReturnDate, BookID, ClientID) "
-                    "VALUES (:startDate, :returnDate, :bookID, :clientID); ",
+                    "INSERT INTO Loan (StartDate, EndDate, ReturnDate, BookID, ClientID) "
+                    "VALUES (:startDate, :endDate, :returnDate, :bookID, :clientID); ",
                     {
                         "startDate": loan.StartDate,
                         "returnDate": loan.ReturnDate,
+                        "endDate": loan.EndDate,
                         "bookID": loan.BookID,
                         "clientID": loan.ClientID
                     }
@@ -45,12 +46,13 @@ class LoanRepositorySqlite3:
                 loan.ID = cur.fetchone()[0]
             else:
                 self._connection.execute(
-                    "INSERT INTO Loan (ID, StartDate, ReturnDate, BookID, ClientID) "
-                    "VALUES (:id, :startDate, :returnDate, :bookID, :clientID); ",
+                    "INSERT INTO Loan (ID, StartDate, EndDate, ReturnDate, BookID, ClientID) "
+                    "VALUES (:id, :startDate, :endDate, :returnDate, :bookID, :clientID); ",
                     {
                         "id": loan.ID,
                         "startDate": loan.StartDate,
                         "returnDate": loan.ReturnDate,
+                        "endDate": loan.EndDate,
                         "bookID": loan.BookID,
                         "clientID": loan.ClientID
                     }
@@ -76,12 +78,13 @@ class LoanRepositorySqlite3:
         try:
             self._connection.execute(
                 "UPDATE Loan SET "
-                "StartDate=:startDate,ReturnDate=:returnDate,BookID=:bookID,ClientID=:clientID "
+                "StartDate=:startDate,EndDate=:endDate,ReturnDate=:returnDate,BookID=:bookID,ClientID=:clientID "
                 "WHERE ID=:id;",
                 {
                     "id": loan.ID,
                     "startDate": loan.StartDate,
                     "returnDate": loan.ReturnDate,
+                    "endDate": loan.EndDate,
                     "bookID": loan.BookID,
                     "clientID": loan.ClientID
                 }
@@ -156,7 +159,7 @@ class UnreturnedLoansView(CachingView[tuple[Loan, Book, Client]]):
             query = (
                 "SELECT t.ID, t.ClientName, t.RegistrationDate,  "
                 "t.BookName, t.Author, t.Genre, t.PublicationYear, t.AddedAtDate, "
-                "t.StartDate, t.BookID, t.ClientID "
+                "t.StartDate, t.EndDate, t.BookID, t.ClientID "
                 "FROM (SELECT *, Client.Name as ClientName, Book.Name as BookName, ROW_NUMBER() OVER (ORDER BY Book.Name) as row_cnt "
                 "FROM Loan INNER JOIN Book ON Loan.BookID = Book.ID INNER JOIN Client ON Loan.ClientID = Client.ID "
                 "WHERE Loan.ReturnDate IS NULL "
@@ -166,7 +169,7 @@ class UnreturnedLoansView(CachingView[tuple[Loan, Book, Client]]):
             ) if stride > 1 else (
                 "SELECT Client.Name as ClientName, Client.RegistrationDate,  "
                 "Book.Name as BookName, Book.Author, Book.Genre, Book.PublicationYear, Book.AddedAtDate, "
-                "Loan.ID, Loan.StartDate, Loan.BookID, Loan.ClientID "
+                "Loan.ID, Loan.StartDate, Loan.EndDate, Loan.BookID, Loan.ClientID "
                 "FROM Loan INNER JOIN Book ON Loan.BookID = Book.ID INNER JOIN Client ON Loan.ClientID = Client.ID "
                 "WHERE Loan.ReturnDate IS NULL "
                 "ORDER BY Book.Name "
@@ -176,7 +179,7 @@ class UnreturnedLoansView(CachingView[tuple[Loan, Book, Client]]):
             query = (
                 "SELECT t.ID, t.ClientName, t.RegistrationDate,  "
                 "t.BookName, t.Author, t.Genre, t.PublicationYear, t.AddedAtDate, "
-                "t.StartDate, t.BookID, t.ClientID "
+                "t.StartDate, t.EndDate, t.BookID, t.ClientID "
                 "FROM (SELECT *, Client.Name as ClientName, Book.Name as BookName, ROW_NUMBER() OVER (ORDER BY Book.Name) as row_cnt "
                 "FROM Loan INNER JOIN Book ON Loan.BookID = Book.ID INNER JOIN Client ON Loan.ClientID = Client.ID "
                 f"WHERE Loan.ReturnDate IS NULL AND ({self._predicate}) "
@@ -186,7 +189,7 @@ class UnreturnedLoansView(CachingView[tuple[Loan, Book, Client]]):
             ) if stride > 1 else (
                 "SELECT Client.Name as ClientName, Client.RegistrationDate,  "
                 "Book.Name as BookName, Book.Author, Book.Genre, Book.PublicationYear, Book.AddedAtDate, "
-                "Loan.ID, Loan.StartDate, Loan.BookID, Loan.ClientID "
+                "Loan.ID, Loan.StartDate, Loan.EndDate, Loan.BookID, Loan.ClientID "
                 "FROM Loan INNER JOIN Book ON Loan.BookID = Book.ID INNER JOIN Client ON Loan.ClientID = Client.ID "
                 f"WHERE Loan.ReturnDate IS NULL AND ({self._predicate}) "
                 "ORDER BY Book.Name "
@@ -205,7 +208,7 @@ class UnreturnedLoansView(CachingView[tuple[Loan, Book, Client]]):
         cur.row_factory = sqlite3.Row #type: ignore
         return [
             (
-                Loan(date.fromisoformat(row["StartDate"]), row["ClientID"], row["BookID"], row["ID"]),
+                Loan(date.fromisoformat(row["StartDate"]), date.fromisoformat(row["EndDate"]), row["ClientID"], row["BookID"], row["ID"]),
                 Book(row["BookName"], row["PublicationYear"], row["Author"], row["Genre"], date.fromisoformat(row["AddedAtDate"]), row["BookID"]),
                 Client(row['ClientName'], date.fromisoformat(row['RegistrationDate']), row['ClientID'])
             )
