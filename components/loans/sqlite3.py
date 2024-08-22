@@ -130,11 +130,11 @@ def generate_predicate_query(predicate: LoanSearchPredicate) -> tuple[str, dict[
         params['yearmax'] = predicate.PublicationYearMax
 
     if predicate.StartDateMin is not None:
-        predicates.append("Loan.StartDateMin >= :startDateMin")
+        predicates.append("Loan.StartDate >= :startDateMin")
         params['startDateMin'] = predicate.StartDateMin.isoformat()
 
     if predicate.StartDateMax is not None:
-        predicates.append("Loan.StartDateMax <= :startDateMax")
+        predicates.append("Loan.StartDate <= :startDateMax")
         params['startDateMax'] = predicate.StartDateMax.isoformat()
 
     if len(predicates) < 1:
