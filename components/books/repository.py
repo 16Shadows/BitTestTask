@@ -28,6 +28,16 @@ class IBookRepository(Protocol):
             Список книг, удовлетворяющих заданному предикату (или всех, если предикат не указан)
         """
         raise NotImplementedError()
+    
+    def add_book(self: Self, book: Book) -> None:
+        """
+            Добавить новую книгу.
+            
+            book: Book -- книга.
+
+            Если книга с таким ID уже существует, будет поднята ошибка.
+        """
+        raise NotImplementedError()
 
 @dataclass
 class BookSearchPredicate:

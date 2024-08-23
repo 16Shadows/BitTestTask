@@ -22,6 +22,7 @@ from modules.menu.input import validator_always, converter_string
 from menus.AddLoanMenu import AddLoanMenu
 from menus.AddLoanReturnMenu import AddLoanReturnMenu
 
+from menus.AddBookMenu import AddBookMenu
 from menus.FindBookMenu import FindBookMenu
 
 from menus.FilteredLoansMenu import FilteredLoansListMenu
@@ -114,6 +115,7 @@ if __name__ == "__main__":
                 MenuEntryBack()
             ])),
             SubmenuEntry("Книги", StaticMenu("Действия с книгами", [
+                SubmenuEntry("Добавить книгу", lambda: AddBookMenu(bookRepo)),
                 SubmenuEntry("Список всех книг", lambda: FilteredBooksListMenu(bookRepo)),
                 SubmenuEntry("Список выданных книг", lambda: FilteredLoansListMenu(loanRepo, DummyGeocoder())),
                 MenuEntryBack()

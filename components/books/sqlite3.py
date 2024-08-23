@@ -36,6 +36,50 @@ class BookRepositorySqlite3:
         self._reset_cache_event += WeakSubscriber(view.reset_cache)
         return view
     
+    def add_book(self: Self, book: Book) -> None:
+        """
+            Добавить новую книгу.
+            
+            book: Book -- книга.
+
+            Если книга с таким ID уже существует, будет поднята ошибка.
+        """
+        try:
+            if book.ID is None:
+                cur = self._connection.execute(
+                    "INSERT INTO Book (Name, Author, Genre, PublicationYear, AddedAtDate) "
+                    "VALUES (:name, :author, :genre, :year, :regDate) "
+                    "RETURNING ID; ",
+                    {
+                        "name": book.Name,
+                        "author": book.Author,
+                        "genre": book.Genre,
+                        "year": book.PublicationYear,
+                        "regDate": book.AddedAtDate
+                    }
+                )
+                cur.row_factory = None
+                book.ID = cur.fetchone()[0]
+            else:
+                self._connection.execute(
+                    "INSERT INTO Book (ID, Name, Author, Genre, PublicationYear, AddedAtDate) "
+                    "VALUES (:id, :name, :author, :genre, :year, :regDate);",
+                    {
+                        "id": book.ID,
+                        "name": book.Name,
+                        "author": book.Author,
+                        "genre": book.Genre,
+                        "year": book.PublicationYear,
+                        "regDate": book.AddedAtDate
+                    }
+                )
+        except:
+            self._connection.rollback()
+            raise
+        else:
+            self._connection.commit()
+            self._reset_cache_event()
+
 def generate_predicate_query(predicate: BookSearchPredicate) -> tuple[str, dict[str, Any]] | None:
     predicates : list[str] = []
     params : dict[str, Any] = {}
