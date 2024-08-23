@@ -22,6 +22,8 @@ from modules.menu.input import validator_always, converter_string
 from menus.AddLoanMenu import AddLoanMenu
 from menus.AddLoanReturnMenu import AddLoanReturnMenu
 
+from menus.AddBookMenu import AddBookMenu
+from menus.BookMenu import BookMenu
 from menus.FindBookMenu import FindBookMenu
 
 from menus.FilteredLoansMenu import FilteredLoansListMenu
@@ -60,7 +62,10 @@ class FilteredBooksListMenu(FindBookMenu):
         self._bookRepo = bookRepo
 
     def _do_search(self: Self, host: MenuHostBase, predicate: BookSearchPredicate):
-        host.push(PaginationMenu(self._bookRepo.get_books(predicate), text_generator=book_to_text))
+        host.push(PaginationMenu(
+            self._bookRepo.get_books(predicate),
+            entry_generator=lambda x: SubmenuEntry(book_to_text(x), lambda: BookMenu(x, self._bookRepo))
+        ))
 
 class FilteredClientsListMenu(FindClientMenu):
     def __init__(self, clientRepo: IClientRepository) -> None:
@@ -114,6 +119,7 @@ if __name__ == "__main__":
                 MenuEntryBack()
             ])),
             SubmenuEntry("Книги", StaticMenu("Действия с книгами", [
+                SubmenuEntry("Добавить книгу", lambda: AddBookMenu(bookRepo)),
                 SubmenuEntry("Список всех книг", lambda: FilteredBooksListMenu(bookRepo)),
                 SubmenuEntry("Список выданных книг", lambda: FilteredLoansListMenu(loanRepo, DummyGeocoder())),
                 MenuEntryBack()
