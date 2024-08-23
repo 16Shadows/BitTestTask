@@ -28,9 +28,10 @@ class LoanRepositorySqlite3:
         """
         try:
             if loan.ID is None:
-                self._connection.execute(
+                cur = self._connection.execute(
                     "INSERT INTO Loan (StartDate, EndDate, ReturnDate, BookID, ClientID) "
-                    "VALUES (:startDate, :endDate, :returnDate, :bookID, :clientID); ",
+                    "VALUES (:startDate, :endDate, :returnDate, :bookID, :clientID)"
+                    "RETURNING ID; ",
                     {
                         "startDate": loan.StartDate,
                         "returnDate": loan.ReturnDate,
@@ -38,9 +39,6 @@ class LoanRepositorySqlite3:
                         "bookID": loan.BookID,
                         "clientID": loan.ClientID
                     }
-                )
-                cur = self._connection.execute(
-                    "SELECT last_insert_rowid();"
                 )
                 cur.row_factory = None
                 loan.ID = cur.fetchone()[0]
