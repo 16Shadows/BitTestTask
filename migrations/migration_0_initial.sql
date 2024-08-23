@@ -1,6 +1,8 @@
 -- Скрипт для создания изначальной схемы БД
 PRAGMA encoding = "UTF-8";
-PRAGMA foreign_keys = ON;
+PRAGMA foreign_keys=ON;
+
+BEGIN TRANSACTION;
 
 CREATE TABLE IF NOT EXISTS Book (
     ID INTEGER PRIMARY KEY,
@@ -116,3 +118,5 @@ WHEN EXISTS (SELECT * FROM Loan WHERE Loan.ClientID = NEW.ID AND NEW.Registratio
 BEGIN
     SELECT RAISE(FAIL, "The client is registered in the library later than they loan a book for the first time.");
 END;
+
+END TRANSACTION;
