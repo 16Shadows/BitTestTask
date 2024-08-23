@@ -32,6 +32,16 @@ class IClientRepository(Protocol):
         """
         raise NotImplementedError()
     
+    def add_client(self: Self, client: Client) -> None:
+        """
+            Добавить нового читателя.
+            
+            client: Client -- читатель.
+
+            Если читатель с таким ID уже существует, будет поднята ошибка.
+        """
+        raise NotImplementedError()
+    
 @dataclass
 class ClientSearchPredicate:
     NameContains : str | None = None
