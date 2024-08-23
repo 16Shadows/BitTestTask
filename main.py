@@ -23,7 +23,7 @@ from menus.AddLoanMenu import AddLoanMenu
 from menus.AddLoanReturnMenu import AddLoanReturnMenu
 
 from menus.AddBookMenu import AddBookMenu
-from menus.BookMenu import BookMenu
+from menus.EditBookMenu import EditBookMenu
 from menus.FindBookMenu import FindBookMenu
 
 from menus.FilteredLoansMenu import FilteredLoansListMenu
@@ -57,14 +57,24 @@ def expired_loans_at(host: MenuHostBase, repo: ILoanRepository):
     host.push(FilteredExpiredLoansMenu(repo, when))
 
 class FilteredBooksListMenu(FindBookMenu):
-    def __init__(self, bookRepo: IBookRepository) -> None:
+    def __init__(self, bookRepo: IBookRepository, loanRepo: ILoanRepository) -> None:
         super().__init__(self._do_search)
         self._bookRepo = bookRepo
+        self._loanRepo = loanRepo
 
     def _do_search(self: Self, host: MenuHostBase, predicate: BookSearchPredicate):
         host.push(PaginationMenu(
             self._bookRepo.get_books(predicate),
-            entry_generator=lambda x: SubmenuEntry(book_to_text(x), lambda: BookMenu(x, self._bookRepo))
+            entry_generator=(
+                lambda x: SubmenuEntry(book_to_text(x), StaticMenu(book_to_text(x), [
+                    SubmenuEntry('Редактировать книгу', lambda: EditBookMenu(x, self._bookRepo)),
+                    SubmenuEntry('История книги', lambda: PaginationMenu(
+                        self._loanRepo.get_book_history(x),
+                        text_generator=lambda h: f'{client_to_text(h[1])} - с {h[0].StartDate}{(f' по {h[0].ReturnDate}' if h[0].ReturnDate is not None else '')}'
+                    )),
+                    MenuEntryBack()
+                ]))
+            )
         ))
 
 class FilteredClientsListMenu(FindClientMenu):
@@ -120,7 +130,7 @@ if __name__ == "__main__":
             ])),
             SubmenuEntry("Книги", StaticMenu("Действия с книгами", [
                 SubmenuEntry("Добавить книгу", lambda: AddBookMenu(bookRepo)),
-                SubmenuEntry("Список всех книг", lambda: FilteredBooksListMenu(bookRepo)),
+                SubmenuEntry("Список всех книг", lambda: FilteredBooksListMenu(bookRepo, loanRepo)),
                 SubmenuEntry("Список выданных книг", lambda: FilteredLoansListMenu(loanRepo, DummyGeocoder())),
                 MenuEntryBack()
             ])),

@@ -10,7 +10,7 @@ from components.books.repository import IBookRepository
 from typing import Self
 from datetime import date
 
-class BookMenu(MenuBase):
+class EditBookMenu(MenuBase):
     def __init__(self, book: Book, repo : IBookRepository) -> None:
         self._regDate = book.AddedAtDate
         self._book = book

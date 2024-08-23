@@ -115,6 +115,17 @@ class LoanRepositorySqlite3:
         self._reset_cache_event += WeakSubscriber(view.reset_cache)
         return view
 
+    def get_book_history(self: Self, book: Book) -> Sequence[tuple[Loan, Client]]:
+        """
+            Вернуть всю историю взятий книги в хронологическом порядке.
+        """
+        if book.ID is None:
+            raise ValueError("The book's ID is not set")
+
+        view = BookHistoryView(self._connection, book.ID)
+        self._reset_cache_event += WeakSubscriber(view.reset_cache)
+        return view
+
 def generate_predicate_query(predicate: LoanSearchPredicate) -> tuple[str, dict[str, Any]] | None:
     predicates : list[str] = []
     params : dict[str, Any] = {}
@@ -175,7 +186,7 @@ class UnreturnedLoansView(CachingView[tuple[Loan, Book, Client]]):
                 "FROM Loan INNER JOIN Book ON Loan.BookID = Book.ID INNER JOIN Client ON Loan.ClientID = Client.ID "
                 "WHERE Loan.ReturnDate IS NULL "
                 "ORDER BY Book.Name "
-                "LIMIT :start,:precount;) as t "
+                "LIMIT :start,:precount) as t "
                 "WHERE t.row_cnt % :stride = 1 LIMIT :count;"
             ) if stride > 1 else (
                 "SELECT Client.Name as ClientName, Client.RegistrationDate,  "
@@ -195,7 +206,7 @@ class UnreturnedLoansView(CachingView[tuple[Loan, Book, Client]]):
                 "FROM Loan INNER JOIN Book ON Loan.BookID = Book.ID INNER JOIN Client ON Loan.ClientID = Client.ID "
                 f"WHERE Loan.ReturnDate IS NULL AND ({self._predicate}) "
                 "ORDER BY Book.Name "
-                "LIMIT :start,:precount;) as t "
+                "LIMIT :start,:precount) as t "
                 "WHERE t.row_cnt % :stride = 1 LIMIT :count;"
             ) if stride > 1 else (
                 "SELECT Client.Name as ClientName, Client.RegistrationDate,  "
@@ -269,7 +280,7 @@ class ExpiredLoansView(CachingView[tuple[Loan, Book, Client, int]]):
                 "FROM Loan INNER JOIN Book ON Loan.BookID = Book.ID INNER JOIN Client ON Loan.ClientID = Client.ID "
                 "WHERE (Loan.ReturnDate IS NULL OR Loan.ReturnDate > Loan.EndDate) AND Loan.EndDate < :at "
                 "ORDER BY Book.Name "
-                "LIMIT :start,:precount;) as t"
+                "LIMIT :start,:precount) as t"
                 "WHERE t.row_cnt % :stride = 1 LIMIT :count;"
             ) if stride > 1 else (
                 "SELECT Client.Name as ClientName, Client.RegistrationDate, Client.Address,  "
@@ -297,7 +308,7 @@ class ExpiredLoansView(CachingView[tuple[Loan, Book, Client, int]]):
                 "WHERE (Loan.ReturnDate IS NULL OR Loan.ReturnDate > Loan.EndDate) AND Loan.EndDate < :at "
                 f"AND {self._predicate} "
                 "ORDER BY Book.Name "
-                "LIMIT :start,:precount;) as t"
+                "LIMIT :start,:precount) as t"
                 "WHERE t.row_cnt % :stride = 1 LIMIT :count;"
             ) if stride > 1 else (
                 "SELECT Client.Name as ClientName, Client.RegistrationDate, Client.Address,  "
@@ -328,6 +339,65 @@ class ExpiredLoansView(CachingView[tuple[Loan, Book, Client, int]]):
                 Book(row["BookName"], row["PublicationYear"], row["Author"], row["Genre"], date.fromisoformat(row["AddedAtDate"]), row["BookID"]),
                 Client(row['ClientName'], date.fromisoformat(row['RegistrationDate']), row['Address'], row['ClientID']),
                 (date.fromisoformat(row["ExpiredUntil"]) - date.fromisoformat(row["EndDate"])).days
+            )
+            for row in cur.fetchall()
+        ]
+    
+class BookHistoryView(CachingView[tuple[Loan, Client]]):
+    def __init__(self, connection: sqlite3.Connection, book: int):
+        self._connection = connection
+        self._params = { "id": book }
+
+    def _get_len(self: Self) -> int:
+        cur = self._connection.execute(
+            "SELECT COUNT(*) FROM Loan WHERE Loan.BookID = :id",
+            self._params
+        )
+        cur.row_factory = None
+        return cur.fetchone()[0]
+    
+    def _get_slice(self: Self, start: int, count: int, stride: int) -> Sequence[tuple[Loan, Client]]:
+        #Запрос меняется в зависимости от наличия предиката
+        #Если stide равен 1, то можно упростить запрос, игнорируя row_cnt и stride
+        query = (
+            "SELECT t.Name, t.RegistrationDate, t.Address,  "
+            "t.ID, t.StartDate, t.EndDate, t.BookID, t.ClientID, t.ReturnDate "
+            "FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY Loan.StartDate) as row_cnt "
+            "FROM Loan INNER JOIN Client ON Loan.ClientID = Client.ID "
+            "WHERE Loan.BookID = :id "
+            "ORDER BY Loan.StartDate "
+            "LIMIT :start,:precount) as t "
+            "WHERE t.row_cnt % :stride = 1 LIMIT :count;"
+        ) if stride > 1 else (
+            "SELECT Client.Name, Client.RegistrationDate, Client.Address, "
+            "Loan.ID, Loan.StartDate, Loan.EndDate, Loan.BookID, Loan.ClientID, Loan.ReturnDate "
+            "FROM Loan INNER JOIN Client ON Loan.ClientID = Client.ID "
+            "WHERE Loan.BookID = :id "
+            "ORDER BY Loan.StartDate "
+            "LIMIT :start,:count;"
+        )
+
+        self._params["start"] = start
+        self._params["precount"] = count*stride - 1
+        self._params["count"] = count
+        self._params["stride"] = stride
+
+        cur = self._connection.execute(
+            query,
+            self._params
+        )
+        cur.row_factory = sqlite3.Row #type: ignore
+        return [
+            (
+                Loan(
+                    date.fromisoformat(row["StartDate"]),
+                    date.fromisoformat(row["EndDate"]),
+                    row["ClientID"],
+                    row["BookID"],
+                    row["ID"],
+                    date.fromisoformat(row["ReturnDate"]) if row["ReturnDate"] is not None else None
+                ),
+                Client(row['Name'], date.fromisoformat(row['RegistrationDate']), row['Address'], row['ClientID'])
             )
             for row in cur.fetchall()
         ]

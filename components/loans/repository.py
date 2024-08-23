@@ -47,6 +47,12 @@ class ILoanRepository(Protocol):
                 predicate: LoanSearchPredicate -- предикат для фильтрации взятых книг.
         """
         raise NotImplementedError()
+    
+    def get_book_history(self: Self, book: Book) -> Sequence[tuple[Loan, Client]]:
+        """
+            Вернуть всю историю взятий книги в хронологическом порядке.
+        """
+        raise NotImplementedError()
 
 @dataclass    
 class LoanSearchPredicate:
