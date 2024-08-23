@@ -38,6 +38,16 @@ class IBookRepository(Protocol):
             Если книга с таким ID уже существует, будет поднята ошибка.
         """
         raise NotImplementedError()
+    
+    def update_book(self: Self, book: Book) -> None:
+        """
+            Обновить существующую книгу.
+            
+            book: Book - книга.
+
+            Если книги с таким ID не существует или возникает конфликт между датой добавления книги и датами её взятия, будет поднята ошибка.
+        """
+        raise NotImplementedError()
 
 @dataclass
 class BookSearchPredicate:

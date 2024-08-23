@@ -80,6 +80,38 @@ class BookRepositorySqlite3:
             self._connection.commit()
             self._reset_cache_event()
 
+    def update_book(self: Self, book: Book) -> None:
+        """
+            Обновить существующую книгу.
+            
+            book: Book - книга.
+
+            Если книги с таким ID не существует или возникает конфликт между датой добавления книги и датами её взятия, будет поднята ошибка.
+        """
+        if book.ID is None:
+            raise ValueError("The books's ID is not set.")
+        
+        try:
+            self._connection.execute(
+                "UPDATE Book SET "
+                "Name=:name,Author=:author,Genre=:genre,PublicationYear=:year,AddedAtDate=:regDate "
+                "WHERE ID=:id;",
+                {
+                        "id": book.ID,
+                        "name": book.Name,
+                        "author": book.Author,
+                        "genre": book.Genre,
+                        "year": book.PublicationYear,
+                        "regDate": book.AddedAtDate
+                    }
+            )
+        except:
+            self._connection.rollback()
+            raise
+        else:
+            self._connection.commit()
+            self._reset_cache_event()
+
 def generate_predicate_query(predicate: BookSearchPredicate) -> tuple[str, dict[str, Any]] | None:
     predicates : list[str] = []
     params : dict[str, Any] = {}
@@ -165,7 +197,10 @@ class UnloanedBooksView(CachingView[Book]):
             self._params
         )
         cur.row_factory = sqlite3.Row #type:ignore
-        return [Book(**row) for row in cur.fetchall()]
+        return [
+            Book(row["Name"], row["PublicationYear"], row["Author"], row["Genre"], date.fromisoformat(row["AddedAtDate"]), row["ID"])
+            for row in cur.fetchall()
+        ]
     
     def _get_len(self: Self) -> int:
         cur = self._connection.execute(
@@ -257,7 +292,10 @@ class AllBooksView(CachingView[Book]):
             self._params
         )
         cur.row_factory = sqlite3.Row #type:ignore
-        return [Book(**row) for row in cur.fetchall()]
+        return [
+            Book(row["Name"], row["PublicationYear"], row["Author"], row["Genre"], date.fromisoformat(row["AddedAtDate"]), row["ID"])
+            for row in cur.fetchall()
+        ]
 
     def _get_len(self: Self) -> int:
         cur = self._connection.execute(
