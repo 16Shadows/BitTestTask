@@ -4,6 +4,7 @@ from typing import Self
 from components.books.repository import BookSearchPredicate, IBookRepository
 from components.books.sqlite3 import BookRepositorySqlite3
 
+from components.clients.repository import IClientRepository, ClientSearchPredicate
 from components.clients.sqlite3 import ClientRepositorySqlite3
 
 from components.loans.sqlite3 import LoanRepositorySqlite3
@@ -15,7 +16,7 @@ from modules.menu.hosts import SimpleConsoleMenuHost
 from modules.menu.core import MenuHostBase
 from modules.menu.static import StaticMenu, StaticMenuEntry, MenuEntryBack, SubmenuEntry
 from modules.menu.pagination import PaginationMenu
-from modules.menu.input import validator_always
+from modules.menu.input import validator_always, converter_string
 
 
 from menus.AddLoanMenu import AddLoanMenu
@@ -25,6 +26,10 @@ from menus.FindBookMenu import FindBookMenu
 
 from menus.FilteredLoansMenu import FilteredLoansListMenu
 from menus.FilteredExpiredLoansMenu import FilteredExpiredLoansMenu
+
+from menus.AddClientMenu import AddClientMenu
+from menus.ClientMenu import ClientMenu
+from menus.FindClientMenu import FindClientMenu
 
 from menus.common import book_to_text, client_to_text
 
@@ -57,6 +62,28 @@ class FilteredBooksListMenu(FindBookMenu):
     def _do_search(self: Self, host: MenuHostBase, predicate: BookSearchPredicate):
         host.push(PaginationMenu(self._bookRepo.get_books(predicate), text_generator=book_to_text))
 
+class FilteredClientsListMenu(FindClientMenu):
+    def __init__(self, clientRepo: IClientRepository) -> None:
+        super().__init__(self._do_search)
+        self._repo = clientRepo
+
+    def _do_search(self: Self, host: MenuHostBase, predicate: ClientSearchPredicate):
+        host.push(PaginationMenu(
+            self._repo.get_clients(predicate),
+            entry_generator=lambda x: SubmenuEntry(client_to_text(x), lambda: ClientMenu(x, self._repo))
+        ))
+
+def add_reader(host: MenuHostBase, clientRepo: IClientRepository):
+    name = host.input(
+        "Введите имя читателя (или нажмите Ctrl + C для отмены): ",
+        converter_string,
+        validator_always,
+        "Имя читателя должно быть не пустым!"
+    )
+    if name is None:
+        return
+    
+
 class DummyGeocoder:
     """
         Геокодер-заглушка, который нужно заменить реальным геокодером.
@@ -75,6 +102,8 @@ class DummyGeocoder:
 
 if __name__ == "__main__":
     with connect("library.db") as connection:
+        #Внешние ключи активируются для каждого подключения, а не для БД в целом.
+        connection.execute("PRAGMA foreign_keys = ON;")
         bookRepo = BookRepositorySqlite3(connection)
         clientRepo = ClientRepositorySqlite3(connection)
         loanRepo = LoanRepositorySqlite3(connection)
@@ -87,6 +116,11 @@ if __name__ == "__main__":
             SubmenuEntry("Книги", StaticMenu("Действия с книгами", [
                 SubmenuEntry("Список всех книг", lambda: FilteredBooksListMenu(bookRepo)),
                 SubmenuEntry("Список выданных книг", lambda: FilteredLoansListMenu(loanRepo, DummyGeocoder())),
+                MenuEntryBack()
+            ])),
+            SubmenuEntry("Читатели", StaticMenu("Действия с читателями", [
+                SubmenuEntry("Добавить читателя", lambda: AddClientMenu(clientRepo)),
+                SubmenuEntry("Список читателей", lambda: FilteredClientsListMenu(clientRepo)),
                 MenuEntryBack()
             ])),
             SubmenuEntry("Отчёты", StaticMenu("Отчёты", [
