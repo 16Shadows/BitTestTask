@@ -11,6 +11,9 @@ from typing import Self
 from datetime import date
 
 class EditBookMenu(MenuBase):
+    """
+        Меню управления конкретной книгой - изменение или удаление.
+    """
     def __init__(self, book: Book, repo : IBookRepository) -> None:
         self._regDate = book.AddedAtDate
         self._book = book

@@ -8,6 +8,9 @@ from copy import deepcopy
 from components.books.repository import BookSearchPredicate
 
 class FindBookMenu(MenuBase):
+    """
+        Меню для указания параметров поиска книги.
+    """
     def __init__(self, on_search: Callable[[MenuHostBase, BookSearchPredicate], None]) -> None:
         self._predicate = BookSearchPredicate()
         self._on_search = on_search

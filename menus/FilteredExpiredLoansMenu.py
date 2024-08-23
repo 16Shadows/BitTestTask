@@ -14,6 +14,10 @@ from modules.menu.input import converter_string, validator_string_not_empty
 from menus.FindLoanMenu import FindLoanMenu
 
 class FilteredExpiredLoansMenu(FindLoanMenu):
+    """
+        Меню для вывода поиска и вывода всех просроченных на указанную дату книг.
+        Реализует также сохранение результата в tab-файл.
+    """
     def __init__(self, repo: ILoanRepository, at: date) -> None:
         super().__init__(self._do_search)
         self._repo = repo

@@ -16,7 +16,7 @@ from modules.menu.hosts import SimpleConsoleMenuHost
 from modules.menu.core import MenuHostBase
 from modules.menu.static import StaticMenu, StaticMenuEntry, MenuEntryBack, SubmenuEntry
 from modules.menu.pagination import PaginationMenu
-from modules.menu.input import validator_always, converter_string
+from modules.menu.input import validator_always
 
 
 from menus.AddLoanMenu import AddLoanMenu
@@ -36,6 +36,9 @@ from menus.FindClientMenu import FindClientMenu
 from menus.common import book_to_text, client_to_text
 
 def unloaned_books_at(host: MenuHostBase, bookRepo: IBookRepository):
+    """
+        Запрашиваем у пользователя дату и отображаем все невыданные книги на указанную дату.
+    """
     when = host.input("Введите дату в формате 'ГГГГ-ММ-ДД' (или используйте Ctrl + C, чтобы отменить ввод): ",
                       date.fromisoformat,
                       validator_always,
@@ -48,6 +51,9 @@ def unloaned_books_at(host: MenuHostBase, bookRepo: IBookRepository):
     ))
 
 def expired_loans_at(host: MenuHostBase, repo: ILoanRepository):
+    """
+        Запрашиваем у пользователя дату и отображаем все просроченные книги на указанную дату.
+    """
     when = host.input("Введите дату в формате 'ГГГГ-ММ-ДД' (или используйте Ctrl + C, чтобы отменить ввод): ",
                       date.fromisoformat,
                       validator_always,
@@ -57,6 +63,10 @@ def expired_loans_at(host: MenuHostBase, repo: ILoanRepository):
     host.push(FilteredExpiredLoansMenu(repo, when))
 
 class FilteredBooksListMenu(FindBookMenu):
+    """
+        Меню на базе меню поиска книги, которое отобразит многостраничный список со всеми найденными книгами.
+        Позволяет перейти к редактированию книги или просмотру истории книги. 
+    """
     def __init__(self, bookRepo: IBookRepository, loanRepo: ILoanRepository) -> None:
         super().__init__(self._do_search)
         self._bookRepo = bookRepo
@@ -78,6 +88,9 @@ class FilteredBooksListMenu(FindBookMenu):
         ))
 
 class FilteredClientsListMenu(FindClientMenu):
+    """
+        Меню на базе меню поиска читателя, которое отобразит многостраничный список со всеми найденными читателями.
+    """
     def __init__(self, clientRepo: IClientRepository) -> None:
         super().__init__(self._do_search)
         self._repo = clientRepo
@@ -87,17 +100,6 @@ class FilteredClientsListMenu(FindClientMenu):
             self._repo.get_clients(predicate),
             entry_generator=lambda x: SubmenuEntry(client_to_text(x), lambda: ClientMenu(x, self._repo))
         ))
-
-def add_reader(host: MenuHostBase, clientRepo: IClientRepository):
-    name = host.input(
-        "Введите имя читателя (или нажмите Ctrl + C для отмены): ",
-        converter_string,
-        validator_always,
-        "Имя читателя должно быть не пустым!"
-    )
-    if name is None:
-        return
-    
 
 class DummyGeocoder:
     """

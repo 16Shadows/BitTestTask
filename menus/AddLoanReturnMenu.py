@@ -18,6 +18,10 @@ from .common import book_to_text, client_to_text, loan_to_text
 from .FindLoanMenu import FindLoanMenu
 
 class AddLoanReturnMenu(MenuBase):
+    """
+        Меню добавления факта возврата книги
+    """
+
     def __init__(self, loanRepo : ILoanRepository) -> None:
         self._loan : tuple[Loan, Book, Client] | None = None
         self._returnDate : date = date.today()

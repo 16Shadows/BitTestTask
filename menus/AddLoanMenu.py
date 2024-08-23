@@ -20,6 +20,9 @@ from .FindBookMenu import FindBookMenu
 from .FindClientMenu import FindClientMenu
 
 class AddLoanMenu(MenuBase):
+    """
+        Меню добавления новой выдачи книги
+    """
     def __init__(self, bookRepo : IBookRepository, clientRepo : IClientRepository, loanRepo : ILoanRepository) -> None:
         self._book : Book | None = None
         self._client : Client | None = None

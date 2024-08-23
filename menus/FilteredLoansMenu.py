@@ -21,6 +21,11 @@ class IGeocodingProvider(Protocol):
        raise NotImplementedError()
 
 class FilteredLoansListMenu(FindLoanMenu):
+    """
+        Меню поиска всех выданных книг.
+        Реализует также сохранения позиций книг в geojson.
+        Использует IoC для геокодинга.
+    """
     def __init__(self, repo: ILoanRepository, geoprovider: IGeocodingProvider) -> None:
         super().__init__(self._do_search)
         self._repo = repo
@@ -48,7 +53,7 @@ class FilteredLoansListMenu(FindLoanMenu):
         dataset = self._repo.get_unreturned_loans(predicate)
         chunkSize = 100
 
-        #Т.к. размер данных в БД неизвестен, будем стримить генерируемый geojson прямо в файл, поэтому без отдельной библиотеки
+        #Т.к. размер данных в БД неизвестен, будем стримить генерируемый geojson прямо в файл, поэтому без отдельной библиотеки, просто форматированием строк.
         with open(f'{filename}.json', "w", encoding="utf-8") as report:
             first = True
             print('{"type": "FeatureCollection","features": [', file=report, end='')

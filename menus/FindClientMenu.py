@@ -8,6 +8,9 @@ from copy import deepcopy
 from components.clients.repository import ClientSearchPredicate
 
 class FindClientMenu(MenuBase):
+    """
+        Меню для указания параметров поиска читателя.
+    """
     def __init__(self, on_search: Callable[[MenuHostBase, ClientSearchPredicate], None]) -> None:
         self._predicate = ClientSearchPredicate()
         self._on_search = on_search

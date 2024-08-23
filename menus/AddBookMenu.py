@@ -11,6 +11,9 @@ from typing import Self
 from datetime import date
 
 class AddBookMenu(MenuBase):
+    """
+        Меню добавления новой книги.
+    """
     def __init__(self, repo : IBookRepository) -> None:
         self._regDate : date = date.today()
         self._Name : str | None = None

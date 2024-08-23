@@ -12,6 +12,9 @@ from typing import Self
 from datetime import date
 
 class ClientMenu(MenuBase):
+    """
+        Меню управления отдельным читателем - изменение или удаление читателя.
+    """
     def __init__(self, client: Client, clientRepo: IClientRepository) -> None:
         super().__init__()
         self._client = client

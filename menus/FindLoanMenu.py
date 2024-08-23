@@ -11,6 +11,10 @@ from datetime import date
 from components.loans.repository import LoanSearchPredicate
 
 class FindLoanMenu(MenuBase):
+    """
+        Меню для указания параметров поиска выданной книги.
+    """
+
     def __init__(self, on_search: Callable[[MenuHostBase, LoanSearchPredicate], None]) -> None:
         self._predicate = LoanSearchPredicate()
         self._on_search = on_search

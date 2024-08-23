@@ -11,6 +11,9 @@ from typing import Self
 from datetime import date
 
 class AddClientMenu(MenuBase):
+    """
+        Меню добавления нового читателя.
+    """
     def __init__(self, clientRepo : IClientRepository) -> None:
         self._regDate : date = date.today()
         self._clientName : str | None = None
