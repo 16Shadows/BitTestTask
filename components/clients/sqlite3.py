@@ -86,6 +86,36 @@ class ClientRepositorySqlite3:
         else:
             self._connection.commit()
             self._reset_cache_event()
+
+    def update_client(self: Self, client: Client) -> None:
+        """
+            Обновить существующего читателя.
+            
+            client: Client - читатель.
+
+            Если читателя с таким ID не существует или возникает конфликт между датой регистрации клиента и датами взятий им книги, будет поднята ошибка.
+        """
+        if client.ID is None:
+            raise ValueError("The client's ID is not set.")
+        
+        try:
+            self._connection.execute(
+                "UPDATE Client SET "
+                "Name=:name,Address=:address,RegistrationDate=:regDate "
+                "WHERE ID=:id;",
+                {
+                    "id": client.ID,
+                    "name": client.Name,
+                    "address": client.Address,
+                    "regDate": client.RegistrationDate
+                }
+            )
+        except:
+            self._connection.rollback()
+            raise
+        else:
+            self._connection.commit()
+            self._reset_cache_event()
     
 def generate_predicate_query(predicate: ClientSearchPredicate) -> tuple[str, dict[str, Any]] | None:
     predicates : list[str] = []

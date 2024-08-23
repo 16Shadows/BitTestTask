@@ -4,7 +4,7 @@ from typing import Self
 from components.books.repository import BookSearchPredicate, IBookRepository
 from components.books.sqlite3 import BookRepositorySqlite3
 
-from components.clients.repository import IClientRepository
+from components.clients.repository import IClientRepository, ClientSearchPredicate
 from components.clients.sqlite3 import ClientRepositorySqlite3
 
 from components.loans.sqlite3 import LoanRepositorySqlite3
@@ -28,6 +28,8 @@ from menus.FilteredLoansMenu import FilteredLoansListMenu
 from menus.FilteredExpiredLoansMenu import FilteredExpiredLoansMenu
 
 from menus.AddClientMenu import AddClientMenu
+from menus.ClientMenu import ClientMenu
+from menus.FindClientMenu import FindClientMenu
 
 from menus.common import book_to_text, client_to_text
 
@@ -59,6 +61,17 @@ class FilteredBooksListMenu(FindBookMenu):
 
     def _do_search(self: Self, host: MenuHostBase, predicate: BookSearchPredicate):
         host.push(PaginationMenu(self._bookRepo.get_books(predicate), text_generator=book_to_text))
+
+class FilteredClientsListMenu(FindClientMenu):
+    def __init__(self, clientRepo: IClientRepository) -> None:
+        super().__init__(self._do_search)
+        self._repo = clientRepo
+
+    def _do_search(self: Self, host: MenuHostBase, predicate: ClientSearchPredicate):
+        host.push(PaginationMenu(
+            self._repo.get_clients(predicate),
+            entry_generator=lambda x: SubmenuEntry(client_to_text(x), lambda: ClientMenu(x, self._repo))
+        ))
 
 def add_reader(host: MenuHostBase, clientRepo: IClientRepository):
     name = host.input(
@@ -105,6 +118,7 @@ if __name__ == "__main__":
             ])),
             SubmenuEntry("Читатели", StaticMenu("Действия с читателями", [
                 SubmenuEntry("Добавить читателя", lambda: AddClientMenu(clientRepo)),
+                SubmenuEntry("Список читателей", lambda: FilteredClientsListMenu(clientRepo)),
                 MenuEntryBack()
             ])),
             SubmenuEntry("Отчёты", StaticMenu("Отчёты", [
