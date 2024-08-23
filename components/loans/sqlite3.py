@@ -172,7 +172,7 @@ class UnreturnedLoansView(CachingView[tuple[Loan, Book, Client]]):
             query = (
                 "SELECT t.ID, t.ClientName, t.RegistrationDate,  "
                 "t.BookName, t.Author, t.Genre, t.PublicationYear, t.AddedAtDate, "
-                "t.StartDate, t.EndDate, t.BookID, t.ClientID "
+                "t.StartDate, t.EndDate, t.BookID, t.ClientID, t.Address "
                 "FROM (SELECT *, Client.Name as ClientName, Book.Name as BookName, ROW_NUMBER() OVER (ORDER BY Book.Name) as row_cnt "
                 "FROM Loan INNER JOIN Book ON Loan.BookID = Book.ID INNER JOIN Client ON Loan.ClientID = Client.ID "
                 "WHERE Loan.ReturnDate IS NULL "
@@ -182,7 +182,7 @@ class UnreturnedLoansView(CachingView[tuple[Loan, Book, Client]]):
             ) if stride > 1 else (
                 "SELECT Client.Name as ClientName, Client.RegistrationDate,  "
                 "Book.Name as BookName, Book.Author, Book.Genre, Book.PublicationYear, Book.AddedAtDate, "
-                "Loan.ID, Loan.StartDate, Loan.EndDate, Loan.BookID, Loan.ClientID "
+                "Loan.ID, Loan.StartDate, Loan.EndDate, Loan.BookID, Loan.ClientID, Client.Address "
                 "FROM Loan INNER JOIN Book ON Loan.BookID = Book.ID INNER JOIN Client ON Loan.ClientID = Client.ID "
                 "WHERE Loan.ReturnDate IS NULL "
                 "ORDER BY Book.Name "
@@ -192,7 +192,7 @@ class UnreturnedLoansView(CachingView[tuple[Loan, Book, Client]]):
             query = (
                 "SELECT t.ID, t.ClientName, t.RegistrationDate,  "
                 "t.BookName, t.Author, t.Genre, t.PublicationYear, t.AddedAtDate, "
-                "t.StartDate, t.EndDate, t.BookID, t.ClientID "
+                "t.StartDate, t.EndDate, t.BookID, t.ClientID, t.Address "
                 "FROM (SELECT *, Client.Name as ClientName, Book.Name as BookName, ROW_NUMBER() OVER (ORDER BY Book.Name) as row_cnt "
                 "FROM Loan INNER JOIN Book ON Loan.BookID = Book.ID INNER JOIN Client ON Loan.ClientID = Client.ID "
                 f"WHERE Loan.ReturnDate IS NULL AND ({self._predicate}) "
@@ -202,7 +202,7 @@ class UnreturnedLoansView(CachingView[tuple[Loan, Book, Client]]):
             ) if stride > 1 else (
                 "SELECT Client.Name as ClientName, Client.RegistrationDate,  "
                 "Book.Name as BookName, Book.Author, Book.Genre, Book.PublicationYear, Book.AddedAtDate, "
-                "Loan.ID, Loan.StartDate, Loan.EndDate, Loan.BookID, Loan.ClientID "
+                "Loan.ID, Loan.StartDate, Loan.EndDate, Loan.BookID, Loan.ClientID, Client.Address "
                 "FROM Loan INNER JOIN Book ON Loan.BookID = Book.ID INNER JOIN Client ON Loan.ClientID = Client.ID "
                 f"WHERE Loan.ReturnDate IS NULL AND ({self._predicate}) "
                 "ORDER BY Book.Name "
@@ -223,7 +223,7 @@ class UnreturnedLoansView(CachingView[tuple[Loan, Book, Client]]):
             (
                 Loan(date.fromisoformat(row["StartDate"]), date.fromisoformat(row["EndDate"]), row["ClientID"], row["BookID"], row["ID"]),
                 Book(row["BookName"], row["PublicationYear"], row["Author"], row["Genre"], date.fromisoformat(row["AddedAtDate"]), row["BookID"]),
-                Client(row['ClientName'], date.fromisoformat(row['RegistrationDate']), row['ClientID'])
+                Client(row['ClientName'], date.fromisoformat(row['RegistrationDate']), row['Address'], row['ClientID'])
             )
             for row in cur.fetchall()
         ]
@@ -259,10 +259,10 @@ class ExpiredLoansView(CachingView[tuple[Loan, Book, Client, int]]):
         #Если stide равен 1, то можно упростить запрос, игнорируя row_cnt и stride
         if self._predicate is None:
             query = (
-                "SELECT t.ID, t.ClientName, t.RegistrationDate,  "
+                "SELECT t.ID, t.ClientName, t.RegistrationDate, t.Address,  "
                 "t.BookName, t.Author, t.Genre, t.PublicationYear, t.AddedAtDate, "
                 "t.StartDate, t.EndDate, t.BookID, t.ClientID, t.ExpiredUntil, t.ReturnDate "
-                "FROM (SELECT Client.Name as ClientName, Client.RegistrationDate,  "
+                "FROM (SELECT Client.Name as ClientName, Client.RegistrationDate, Client.Address,  "
                 "Book.Name as BookName, Book.Author, Book.Genre, Book.PublicationYear, Book.AddedAtDate, "
                 "Loan.ID, Loan.StartDate, Loan.EndDate, Loan.BookID, Loan.ClientID, Loan.ReturnDate, "
                 "(CASE WHEN Loan.ReturnDate IS NULL OR Loan.ReturnDate > :at THEN :at "
@@ -274,7 +274,7 @@ class ExpiredLoansView(CachingView[tuple[Loan, Book, Client, int]]):
                 "LIMIT :start,:precount;) as t"
                 "WHERE t.row_cnt % :stride = 1 LIMIT :count;"
             ) if stride > 1 else (
-                "SELECT Client.Name as ClientName, Client.RegistrationDate,  "
+                "SELECT Client.Name as ClientName, Client.RegistrationDate, Client.Address,  "
                 "Book.Name as BookName, Book.Author, Book.Genre, Book.PublicationYear, Book.AddedAtDate, "
                 "Loan.ID, Loan.StartDate, Loan.EndDate, Loan.BookID, Loan.ClientID, Loan.ReturnDate, "
                 "(CASE WHEN Loan.ReturnDate IS NULL OR Loan.ReturnDate > :at THEN :at "
@@ -286,10 +286,10 @@ class ExpiredLoansView(CachingView[tuple[Loan, Book, Client, int]]):
             )
         else:
             query = (
-                "SELECT t.ID, t.ClientName, t.RegistrationDate,  "
+                "SELECT t.ID, t.ClientName, t.RegistrationDate, t.Address,  "
                 "t.BookName, t.Author, t.Genre, t.PublicationYear, t.AddedAtDate, "
                 "t.StartDate, t.EndDate, t.BookID, t.ClientID, t.ExpiredUntil, t.ReturnDate "
-                "FROM (SELECT Client.Name as ClientName, Client.RegistrationDate,  "
+                "FROM (SELECT Client.Name as ClientName, Client.RegistrationDate, Client.Address,  "
                 "Book.Name as BookName, Book.Author, Book.Genre, Book.PublicationYear, Book.AddedAtDate, "
                 "Loan.ID, Loan.StartDate, Loan.EndDate, Loan.BookID, Loan.ClientID, Loan.ReturnDate, "
                 "(CASE WHEN Loan.ReturnDate IS NULL OR Loan.ReturnDate > :at THEN :at "
@@ -302,7 +302,7 @@ class ExpiredLoansView(CachingView[tuple[Loan, Book, Client, int]]):
                 "LIMIT :start,:precount;) as t"
                 "WHERE t.row_cnt % :stride = 1 LIMIT :count;"
             ) if stride > 1 else (
-                "SELECT Client.Name as ClientName, Client.RegistrationDate,  "
+                "SELECT Client.Name as ClientName, Client.RegistrationDate, Client.Address,  "
                 "Book.Name as BookName, Book.Author, Book.Genre, Book.PublicationYear, Book.AddedAtDate, "
                 "Loan.ID, Loan.StartDate, Loan.EndDate, Loan.BookID, Loan.ClientID, Loan.ReturnDate, "
                 "(CASE WHEN Loan.ReturnDate IS NULL OR Loan.ReturnDate > :at THEN :at "
@@ -328,7 +328,7 @@ class ExpiredLoansView(CachingView[tuple[Loan, Book, Client, int]]):
             (
                 Loan(date.fromisoformat(row["StartDate"]), date.fromisoformat(row["EndDate"]), row["ClientID"], row["BookID"], row["ID"], date.fromisoformat(row["ReturnDate"]) if row["ReturnDate"] is not None else None),
                 Book(row["BookName"], row["PublicationYear"], row["Author"], row["Genre"], date.fromisoformat(row["AddedAtDate"]), row["BookID"]),
-                Client(row['ClientName'], date.fromisoformat(row['RegistrationDate']), row['ClientID']),
+                Client(row['ClientName'], date.fromisoformat(row['RegistrationDate']), row['Address'], row['ClientID']),
                 (date.fromisoformat(row["ExpiredUntil"]) - date.fromisoformat(row["EndDate"])).days
             )
             for row in cur.fetchall()

@@ -5,5 +5,6 @@ from datetime import date
 class Client:
     Name: str
     RegistrationDate: date
+    Address: str
 
     ID: int | None = None
