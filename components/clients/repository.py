@@ -51,6 +51,16 @@ class IClientRepository(Protocol):
             Если читателя с таким ID не существует или возникает конфликт между датой регистрации клиента и датами взятий им книги, будет поднята ошибка.
         """
         raise NotImplementedError()
+    
+    def delete_client(self: Self, client: Client) -> None:
+        """
+            Удалить существующего читателя.
+            
+            client: Client - читатель.
+
+            Если читателя с таким ID не существует, будет поднята ошибка.
+        """
+        raise NotImplementedError()
 
 @dataclass
 class ClientSearchPredicate:

@@ -102,6 +102,8 @@ class DummyGeocoder:
 
 if __name__ == "__main__":
     with connect("library.db") as connection:
+        #Внешние ключи активируются для каждого подключения, а не для БД в целом.
+        connection.execute("PRAGMA foreign_keys = ON;")
         bookRepo = BookRepositorySqlite3(connection)
         clientRepo = ClientRepositorySqlite3(connection)
         loanRepo = LoanRepositorySqlite3(connection)

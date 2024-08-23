@@ -116,6 +116,31 @@ class ClientRepositorySqlite3:
         else:
             self._connection.commit()
             self._reset_cache_event()
+
+    def delete_client(self: Self, client: Client) -> None:
+        """
+            Удалить существующего читателя.
+            
+            client: Client - читатель.
+
+            Если читателя с таким ID не существует, будет поднята ошибка.
+        """
+        if client.ID is None:
+            raise ValueError("The client's ID is not set.")
+        
+        try:
+            self._connection.execute(
+                "DELETE FROM Client WHERE ID=:id;",
+                {
+                    "id": client.ID
+                }
+            )
+        except:
+            self._connection.rollback()
+            raise
+        else:
+            self._connection.commit()
+            self._reset_cache_event()
     
 def generate_predicate_query(predicate: ClientSearchPredicate) -> tuple[str, dict[str, Any]] | None:
     predicates : list[str] = []

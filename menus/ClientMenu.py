@@ -41,6 +41,8 @@ class ClientMenu(MenuBase):
                 self._client.RegistrationDate != self._regDate):
             res.append(StaticMenuEntry('Сохранить', self._save))
 
+        res.append(StaticMenuEntry('Удалить', self._delete))
+
         res.append(MenuEntryBack())
 
         return res
@@ -87,3 +89,10 @@ class ClientMenu(MenuBase):
             self._client.Address = orig_address
             self._client.RegistrationDate = orig_regDate
             host.message(f'Не удалось сохранить читателя. Текст ошибки:\n{e}')
+
+    def _delete(self: Self, host: MenuHostBase):
+        try:
+            self._repo.delete_client(self._client)
+            host.pop()
+        except Exception as e:
+            host.message(f'Не удалось удалить читателя. Текст ошибки:\n{e}')
