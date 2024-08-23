@@ -48,6 +48,16 @@ class IBookRepository(Protocol):
             Если книги с таким ID не существует или возникает конфликт между датой добавления книги и датами её взятия, будет поднята ошибка.
         """
         raise NotImplementedError()
+    
+    def delete_book(self: Self, book: Book) -> None:
+        """
+            Удалить существующую книгу.
+            
+            book: Book - книга.
+
+            Если книга с таким ID не существует, будет поднята ошибка.
+        """
+        raise NotImplementedError()
 
 @dataclass
 class BookSearchPredicate:

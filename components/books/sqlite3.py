@@ -112,6 +112,31 @@ class BookRepositorySqlite3:
             self._connection.commit()
             self._reset_cache_event()
 
+    def delete_book(self: Self, book: Book) -> None:
+        """
+            Удалить существующую книгу.
+            
+            book: Book - книга.
+
+            Если книга с таким ID не существует, будет поднята ошибка.
+        """
+        if book.ID is None:
+            raise ValueError("The book's ID is not set.")
+        
+        try:
+            self._connection.execute(
+                "DELETE FROM Book WHERE ID=:id;",
+                {
+                    "id": book.ID
+                }
+            )
+        except:
+            self._connection.rollback()
+            raise
+        else:
+            self._connection.commit()
+            self._reset_cache_event()
+
 def generate_predicate_query(predicate: BookSearchPredicate) -> tuple[str, dict[str, Any]] | None:
     predicates : list[str] = []
     params : dict[str, Any] = {}

@@ -47,6 +47,8 @@ class BookMenu(MenuBase):
                 self._regDate != self._book.AddedAtDate):
             res.append(StaticMenuEntry("Сохранить", self._save))
 
+        res.append(StaticMenuEntry('Удалить', self._delete))
+
         res.append(MenuEntryBack())
 
         return res
@@ -117,3 +119,10 @@ class BookMenu(MenuBase):
             self._book.PublicationYear = orig_year
             self._book.AddedAtDate = orig_regDate
             host.message(f'Не удалось сохранить книгу. Текст ошибки:\n{e}')
+
+    def _delete(self: Self, host: MenuHostBase):
+        try:
+            self._repo.delete_book(self._book)
+            host.pop()
+        except Exception as e:
+            host.message(f'Не удалось удалить книгу. Текст ошибки:\n{e}')
