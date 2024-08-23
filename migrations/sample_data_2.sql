@@ -17,8 +17,8 @@ INSERT INTO Book (ID, Name, PublicationYear, Author, Genre, AddedAtDate) VALUES 
 INSERT INTO Loan (StartDate, EndDate, ReturnDate, BookID, ClientID) VALUES ('2024-06-23', '2024-07-23', '2024-07-17', 2, 1);
 INSERT INTO Loan (StartDate, EndDate, ReturnDate, BookID, ClientID) VALUES ('2024-07-16', '2024-08-16', '2024-08-22', 1, 1);
 
-INSERT INTO Loan (StartDate, EndDate, ReturnDate, BookID, ClientID) VALUES ('2024-06-22', NULL, 0, 2);
+INSERT INTO Loan (StartDate, EndDate, ReturnDate, BookID, ClientID) VALUES ('2024-06-22', '2024-06-22', NULL, 0, 2);
 
-INSERT INTO Loan (StartDate, EndDate, ReturnDate, BookID, ClientID) VALUES ('2024-06-25', NULL, 3, 2);
+INSERT INTO Loan (StartDate, EndDate, ReturnDate, BookID, ClientID) VALUES ('2024-06-25', '2024-06-25', NULL, 3, 2);
 
 END TRANSACTION;
