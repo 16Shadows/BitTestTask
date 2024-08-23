@@ -125,6 +125,26 @@ class LoanRepositorySqlite3:
         view = BookHistoryView(self._connection, book.ID)
         self._reset_cache_event += WeakSubscriber(view.reset_cache)
         return view
+    
+    def is_book_loaned_during(self: Self, book: Book, start: date, end: date) -> bool:
+        """
+            Проверить, выдана ли указанная книга в какой-то момент на протяжении указанного промежутка времени.
+            
+            Аргументы:
+            book: Book - книга
+            start : date - начало промежутка (включительно)
+            end: date - конец промежутка (включительно)
+        """
+        cur = self._connection.execute(
+            "SELECT EXISTS( "
+            "SELECT * FROM Loan WHERE "
+            "Loan.BookID = :id AND "
+            "Loan.StartDate <= :rangeEnd AND "
+	        "(:rangeStart <= Loan.ReturnDate OR Loan.ReturnDate IS NULL) "
+            ")"
+        )
+        cur.row_factory = None
+        return bool(cur.fetchone()[0])
 
 def generate_predicate_query(predicate: LoanSearchPredicate) -> tuple[str, dict[str, Any]] | None:
     predicates : list[str] = []

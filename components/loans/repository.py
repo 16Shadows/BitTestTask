@@ -53,6 +53,17 @@ class ILoanRepository(Protocol):
             Вернуть всю историю взятий книги в хронологическом порядке.
         """
         raise NotImplementedError()
+    
+    def is_book_loaned_during(self: Self, book: Book, start: date, end: date) -> bool:
+        """
+            Проверить, выдана ли указанная книга в какой-то момент на протяжении указанного промежутка времени.
+            
+            Аргументы:
+            book: Book - книга
+            start : date - начало промежутка (включительно)
+            end: date - конец промежутка (включительно)
+        """
+        raise NotImplementedError()
 
 @dataclass    
 class LoanSearchPredicate:
