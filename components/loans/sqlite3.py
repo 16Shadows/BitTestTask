@@ -141,7 +141,12 @@ class LoanRepositorySqlite3:
             "Loan.BookID = :id AND "
             "Loan.StartDate <= :rangeEnd AND "
 	        "(:rangeStart <= Loan.ReturnDate OR Loan.ReturnDate IS NULL) "
-            ")"
+            ")",
+            {
+                "id": book.ID,
+                "rangeStart": start,
+                "rangeEnd": end
+            }
         )
         cur.row_factory = None
         return bool(cur.fetchone()[0])
