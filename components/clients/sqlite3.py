@@ -188,7 +188,10 @@ class AllClientsView(CachingView[Client]):
             self._params
         )
         cur.row_factory = sqlite3.Row #type:ignore
-        return [Client(**row) for row in cur.fetchall()]
+        return [
+            Client(row["Name"], date.fromisoformat(row["RegistrationDate"]), row["Address"], row["ID"])
+            for row in cur.fetchall()
+        ]
 
     def _get_len(self: Self) -> int:
         cur = self._connection.execute(
