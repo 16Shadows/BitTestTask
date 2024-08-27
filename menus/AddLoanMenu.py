@@ -105,10 +105,10 @@ class AddLoanMenu(MenuBase):
         self._endDate = when
 
     def _add_new_loan(self: Self, host: MenuHostBase):
-        if self._book.AddedAtDate < self._startDate or self._loanRepo.is_book_loaned_during(self._book, self._startDate, self._endDate): #type: ignore
+        if self._book.AddedAtDate > self._startDate or self._loanRepo.is_book_loaned_during(self._book, self._startDate, self._endDate): #type: ignore
             host.message("На момент даты выдачи книга не в библиотеке!")
             return
-        elif self._client.RegistrationDate < self._startDate: #type: ignore
+        elif self._client.RegistrationDate > self._startDate: #type: ignore
             host.message("На момент даты выдачи клиент ещё не был зарегистрирован в библиотеке!")
             return
         
